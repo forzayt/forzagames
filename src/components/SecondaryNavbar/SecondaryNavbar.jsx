@@ -21,7 +21,19 @@ const SubNavbar = () => {
         try {
           const data = await steamApi.searchGames(query);
           const results = (data.items || []).slice(0, 8).map(mapSteamSearchToUI);
-          setFilteredGames(results);
+          
+          // Remove duplicates based on ID to avoid React key warnings
+          const uniqueResults = [];
+          const seenIds = new Set();
+          
+          results.forEach(game => {
+            if (!seenIds.has(game.id)) {
+              seenIds.add(game.id);
+              uniqueResults.push(game);
+            }
+          });
+
+          setFilteredGames(uniqueResults);
         } catch (error) {
           console.error('Search error:', error);
           setFilteredGames([]);

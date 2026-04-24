@@ -41,12 +41,24 @@ const GameSlider = ({ title = "Special Offers", category = "specials" }) => {
           items = data.coming_soon?.items || [];
         } else {
           // Fallback to specials if category not found
-          items = data.specials?.items || [];
-        }
+           items = data.specials?.items || [];
+          }
+  
+          const mappedGames = items.slice(0, 30).map(mapSteamGameToUI);
+          
+          // Remove duplicates based on ID to avoid React key warnings
+          const uniqueGames = [];
+          const seenIds = new Set();
+          
+          mappedGames.forEach(game => {
+            if (!seenIds.has(game.id)) {
+              seenIds.add(game.id);
+              uniqueGames.push(game);
+            }
+          });
 
-        const mappedGames = items.slice(0, 12).map(mapSteamGameToUI);
-        setGames(mappedGames);
-        setLoading(false);
+          setGames(uniqueGames);
+          setLoading(false);
       } catch (error) {
         console.error(`Error fetching ${category}:`, error);
         setLoading(false);

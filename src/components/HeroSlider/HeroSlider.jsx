@@ -14,7 +14,19 @@ const HeroSlider = () => {
       try {
         const data = await steamApi.getFeatured();
         const featuredGames = (data.featured_win || []).slice(0, 6).map(mapSteamGameToUI);
-        setGames(featuredGames);
+        
+        // Remove duplicates based on ID to avoid React key warnings
+        const uniqueGames = [];
+        const seenIds = new Set();
+        
+        featuredGames.forEach(game => {
+          if (!seenIds.has(game.id)) {
+            seenIds.add(game.id);
+            uniqueGames.push(game);
+          }
+        });
+
+        setGames(uniqueGames);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching featured games:', error);
