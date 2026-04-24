@@ -18,7 +18,7 @@ const GameCard = ({ game, onClick }) => (
 
 const CARD_WIDTH = 180;
 
-const GameSlider = () => {
+const GameSlider = ({ title = "Special Offers", category = "specials" }) => {
   const [games, setGames] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(6);
@@ -29,16 +29,31 @@ const GameSlider = () => {
     const fetchGames = async () => {
       try {
         const data = await steamApi.getFeaturedCategories();
-        const specials = (data.specials?.items || []).slice(0, 12).map(mapSteamGameToUI);
-        setGames(specials);
+        let items = [];
+        
+        if (category === "specials") {
+          items = data.specials?.items || [];
+        } else if (category === "top_sellers") {
+          items = data.top_sellers?.items || [];
+        } else if (category === "new_releases") {
+          items = data.new_releases?.items || [];
+        } else if (category === "coming_soon") {
+          items = data.coming_soon?.items || [];
+        } else {
+          // Fallback to specials if category not found
+          items = data.specials?.items || [];
+        }
+
+        const mappedGames = items.slice(0, 12).map(mapSteamGameToUI);
+        setGames(mappedGames);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching specials:', error);
+        console.error(`Error fetching ${category}:`, error);
         setLoading(false);
       }
     };
     fetchGames();
-  }, []);
+  }, [category]);
 
   useEffect(() => {
     function updateItemsPerView() {
@@ -74,7 +89,7 @@ const GameSlider = () => {
   return (
     <div className="game-slider-container" {...handlers}>
       <div className="slider-header">
-        <h2 className="slider-title">Special Offers</h2>
+        <h2 className="slider-title">{title}</h2>
         <div className="nav-buttons">
           <button onClick={goPrevious} disabled={currentIndex === 0} aria-label="Previous">
             <ChevronLeft />
