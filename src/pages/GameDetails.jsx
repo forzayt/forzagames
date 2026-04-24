@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Download, Monitor, HardDrive, Cpu, Layers } from "lucide-react";
+import { ChevronLeft, Download, Monitor, HardDrive, Cpu, Layers, X, ArrowUp } from "lucide-react";
 import "./GameDetails.css";
 
 const GameDetails = () => {
@@ -9,6 +9,21 @@ const GameDetails = () => {
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedScreenshot, setSelectedScreenshot] = useState(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchGameDetails = async () => {
@@ -100,8 +115,18 @@ const GameDetails = () => {
                 controls 
                 poster={steam.movies[0].thumbnail}
                 className="game-trailer"
+                key={steam.movies[0].id}
               >
-                <source src={steam.movies[0].webm?.max || steam.movies[0].mp4?.max} type="video/webm" />
+                {/* Try webm sources */}
+                {steam.movies[0].webm?.max && <source src={steam.movies[0].webm.max} type="video/webm" />}
+                {steam.movies[0].webm?.['480'] && <source src={steam.movies[0].webm['480']} type="video/webm" />}
+                {typeof steam.movies[0].webm === 'string' && <source src={steam.movies[0].webm} type="video/webm" />}
+                
+                {/* Try mp4 sources */}
+                {steam.movies[0].mp4?.max && <source src={steam.movies[0].mp4.max} type="video/mp4" />}
+                {steam.movies[0].mp4?.['480'] && <source src={steam.movies[0].mp4['480']} type="video/mp4" />}
+                {typeof steam.movies[0].mp4 === 'string' && <source src={steam.movies[0].mp4} type="video/mp4" />}
+                
                 Your browser does not support the video tag.
               </video>
             </div>
@@ -114,7 +139,13 @@ const GameDetails = () => {
             <h2>Screenshots</h2>
             <div className="screenshots-grid">
               {steam.screenshots.slice(0, 8).map(ss => (
-                <img key={ss.id} src={ss.path_full} alt="Screenshot" className="screenshot" />
+                <img 
+                  key={ss.id} 
+                  src={ss.path_full} 
+                  alt="Screenshot" 
+                  className="screenshot" 
+                  onClick={() => setSelectedScreenshot(ss.path_full)}
+                />
               ))}
             </div>
           </section>
@@ -187,6 +218,29 @@ const GameDetails = () => {
           )}
         </section>
       </div>
+
+      {/* Screenshot Modal */}
+      {selectedScreenshot && (
+        <div className="screenshot-modal" onClick={() => setSelectedScreenshot(null)}>
+          <div className="modal-content">
+            <button className="close-modal" onClick={() => setSelectedScreenshot(null)}>
+              <X size={32} />
+            </button>
+            <img src={selectedScreenshot} alt="Full size screenshot" className="modal-image" />
+          </div>
+        </div>
+      )}
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button 
+          className="scroll-top-btn" 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Scroll to top"
+        >
+          <ArrowUp size={24} />
+        </button>
+      )}
     </div>
   );
 };
