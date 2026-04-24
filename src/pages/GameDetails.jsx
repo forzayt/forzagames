@@ -94,6 +94,15 @@ const GameDetails = () => {
                 {steam.genres?.map(g => <span key={g.id} className="genre-tag">{g.description}</span>)}
               </div>
               <p className="short-desc" dangerouslySetInnerHTML={{ __html: steam.short_description }}></p>
+              
+              {Object.keys(linksByCategory).length > 0 && (
+                <button 
+                  className="hero-download-btn"
+                  onClick={() => document.getElementById('downloads-section')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  <Download size={24} /> Download Now
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -153,7 +162,7 @@ const GameDetails = () => {
 
         {/* Download Links Section */}
         {Object.keys(linksByCategory).length > 0 && (
-          <section className="detail-section downloads-section">
+          <section id="downloads-section" className="detail-section downloads-section">
             <h2><Download size={24} /> Download Links</h2>
             <div className="download-groups">
               {Object.entries(linksByCategory).map(([category, urls]) => (
