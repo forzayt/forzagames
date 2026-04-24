@@ -4,7 +4,6 @@ import SecondaryNavbar from "../components/SecondaryNavbar/SecondaryNavbar";
 import HeroSlider from "../components/HeroSlider/HeroSlider";
 import GameCardsSlider from "../components/GameCardsSlider/GameCardsSlider";
 import GameCardsSlider2 from "../components/GameCardsSlider2/GameCardsSlider2";
-import DealGameCards from "../components/DealGameCards/DealGameCards";
 
 const HomePage = () => {
   return (
@@ -14,7 +13,6 @@ const HomePage = () => {
       <HeroSlider />
       <GameCardsSlider />
       <GameCardsSlider2 />
-      <DealGameCards />
       <div className="copyright-container">
         <p>© 2026, Forza Games, Inc. All rights reserved.</p>
         <p>
