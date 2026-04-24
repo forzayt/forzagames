@@ -3,7 +3,6 @@ import Navbar from "../components/Navbar/Navbar";
 import SecondaryNavbar from "../components/SecondaryNavbar/SecondaryNavbar";
 import HeroSlider from "../components/HeroSlider/HeroSlider";
 import GameCardsSlider from "../components/GameCardsSlider/GameCardsSlider";
-import FeaturedGameCard from "../components/FeaturedGameCard/FeaturedGameCard";
 import GameCardsSlider2 from "../components/GameCardsSlider2/GameCardsSlider2";
 import DealGameCards from "../components/DealGameCards/DealGameCards";
 
@@ -14,7 +13,6 @@ const HomePage = () => {
       <SecondaryNavbar />
       <HeroSlider />
       <GameCardsSlider />
-      <FeaturedGameCard />
       <GameCardsSlider2 />
       <DealGameCards />
       <div className="copyright-container">
