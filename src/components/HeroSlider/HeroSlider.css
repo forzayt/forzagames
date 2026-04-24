@@ -60,8 +60,8 @@
 }
 
 .hero-game-thumbnails li {
-  padding-left: 20px;
-  height: 100%;
+  padding: 10px 20px;
+  width: 100%;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -82,12 +82,13 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  padding-right: 40px;
+  width: 100%;
 }
 
 .thumbnail-placeholder {
-  height: 80px;
-  width: 60px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
   border-radius: 8px;
   background-color: #3a3a3a;
 }
