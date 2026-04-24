@@ -27,7 +27,7 @@ export const mapSteamGameToUI = (steamGame) => {
 
 export const mapSteamSearchToUI = (item) => {
   return {
-    id: item.id,
+    id: item.id || item.appid,
     name: item.name,
     category: 'Game',
     discount: item.discount_percent > 0 ? `-${item.discount_percent}%` : null,

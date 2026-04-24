@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './HeroSlider.css';
 import steamApi from '../../services/steamApi';
 import { mapSteamGameToUI } from '../../services/dataMapper';
+import { Link } from 'react-router-dom';
 
 const HeroSlider = () => {
   const [games, setGames] = useState([]);
@@ -50,7 +51,9 @@ const HeroSlider = () => {
               key={game.id}
               className={`carousel-item ${index === activeIndex ? 'active' : ''}`}
             >
-              <img src={game.mainImage} className="d-block w-100" alt={game.name} />
+              <Link to={`/game/${game.id}`}>
+                <img src={game.mainImage} className="d-block w-100" alt={game.name} />
+              </Link>
             </div>
           ))}
         </div>

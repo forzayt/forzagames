@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import './DealGameCards.css';
 import steamApi from '../../services/steamApi';
 import { mapSteamGameToUI } from '../../services/dataMapper';
+import { useNavigate } from 'react-router-dom';
 
 const GamesWithAchievements = () => {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -38,7 +40,12 @@ const GamesWithAchievements = () => {
       <div className="deal-container">
         <div className="deal-grid">
           {games.map((game, idx) => (
-            <div className="deal-card transparent-card" key={idx}>
+            <div 
+              className="deal-card transparent-card" 
+              key={idx}
+              onClick={() => navigate(`/game/${game.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="deal-image-wrapper">
                 <img src={game.image} alt={game.name} className="deal-image" />
               </div>
@@ -51,7 +58,12 @@ const GamesWithAchievements = () => {
 
         <div className="deal-slider">
           {games.map((game, idx) => (
-            <div className="deal-card transparent-card deal-slider-card" key={idx}>
+            <div 
+              className="deal-card transparent-card deal-slider-card" 
+              key={idx}
+              onClick={() => navigate(`/game/${game.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="deal-image-wrapper">
                 <img src={game.image} alt={game.name} className="deal-image" />
               </div>

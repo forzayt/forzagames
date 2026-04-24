@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import './FeaturedGameCard.css';
 import steamApi from '../../services/steamApi';
 import { mapSteamGameToUI } from '../../services/dataMapper';
+import { useNavigate } from 'react-router-dom';
 
 const GamesWithAchievements = () => {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -32,7 +34,12 @@ const GamesWithAchievements = () => {
         {/* Grid for desktop/tablet */}
         <div className="games-grid">
           {games.map((game, index) => (
-            <div className="game-card transparent-card" key={index}>
+            <div 
+              className="game-card transparent-card" 
+              key={index}
+              onClick={() => navigate(`/game/${game.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <img src={game.image} alt={game.name} className="game-image" />
               <div className="game-content">
                 <h3 className="game-title">{game.name}</h3>
@@ -45,7 +52,12 @@ const GamesWithAchievements = () => {
         {/* Slider for mobile */}
         <div className="slider-container">
           {games.map((game, index) => (
-            <div className="game-card transparent-card slider-card" key={index}>
+            <div 
+              className="game-card transparent-card slider-card" 
+              key={index}
+              onClick={() => navigate(`/game/${game.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <img src={game.image} alt={game.name} className="game-image" />
               <div className="game-content">
                 <h3 className="game-title">{game.name}</h3>

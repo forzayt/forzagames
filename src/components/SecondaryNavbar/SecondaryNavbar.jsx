@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { BiSearch } from "react-icons/bi";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { FiHeart, FiShoppingCart } from "react-icons/fi";
@@ -12,6 +12,7 @@ const SubNavbar = () => {
   const [query, setQuery] = useState("");
   const [filteredGames, setFilteredGames] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const searchTimeout = setTimeout(async () => {
@@ -68,7 +69,19 @@ const SubNavbar = () => {
               <div className="search_item">Searching...</div>
             ) : filteredGames.length ? (
               filteredGames.map(game => (
-                <div key={game.id} className="search_item">
+                <div 
+                  key={game.id} 
+                  className="search_item"
+                  onClick={() => {
+                    console.log("Navigating to game:", game.id);
+                    if (game.id) {
+                      navigate(`/game/${game.id}`);
+                      setQuery("");
+                      setSearchOpen(false);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
                   {game.image && <img src={game.image} alt="" className="search_thumb" />}
                   <span>{game.name}</span>
                 </div>
@@ -97,7 +110,18 @@ const SubNavbar = () => {
                   <div className="search_item">Searching...</div>
                 ) : filteredGames.length ? (
                   filteredGames.map(game => (
-                    <div key={game.id} className="search_item">
+                    <div 
+                      key={game.id} 
+                      className="search_item"
+                      onClick={() => {
+                        console.log("Navigating to game:", game.id);
+                        if (game.id) {
+                          navigate(`/game/${game.id}`);
+                          setQuery("");
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
                       {game.image && <img src={game.image} alt="" className="search_thumb" />}
                       <span>{game.name}</span>
                     </div>

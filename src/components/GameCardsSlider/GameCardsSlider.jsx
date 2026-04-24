@@ -3,10 +3,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
 import steamApi from "../../services/steamApi";
 import { mapSteamGameToUI } from "../../services/dataMapper";
+import { useNavigate } from "react-router-dom";
 import "./GameCardsSlider.css";
 
-const GameCard = ({ game }) => (
-  <div className="game-card">
+const GameCard = ({ game, onClick }) => (
+  <div onClick={onClick} className="game-card" style={{ cursor: 'pointer' }}>
     <div className="image-container">
       <img src={game.image} alt={game.name} className="game-image" />
     </div>
@@ -22,6 +23,7 @@ const GameSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(6);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -102,7 +104,7 @@ const GameSlider = () => {
               className="card-wrapper"
               style={{ width: `${CARD_WIDTH}px` }}
             >
-              <GameCard game={game} />
+              <GameCard game={game} onClick={() => navigate(`/game/${game.id}`)} />
             </div>
           ))}
         </div>
