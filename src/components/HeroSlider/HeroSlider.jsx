@@ -1,22 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import './HeroSlider.css';
-import games from '../../data/HeroSliderData.js';
+import steamApi from '../../services/steamApi';
+import { mapSteamGameToUI } from '../../services/dataMapper';
 
 const HeroSlider = () => {
+  const [games, setGames] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const data = await steamApi.getFeatured();
+        const featuredGames = (data.featured_win || []).slice(0, 6).map(mapSteamGameToUI);
+        setGames(featuredGames);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching featured games:', error);
+        setLoading(false);
+      }
+    };
+    fetchGames();
+  }, []);
+
+  useEffect(() => {
+    if (games.length === 0) return;
     const interval = setInterval(() => {
       setActiveIndex((prevIndex) =>
         prevIndex === games.length - 1 ? 0 : prevIndex + 1
       );
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [games.length]);
 
   const handleThumbnailClick = (index) => {
     setActiveIndex(index);
   };
+
+  if (loading) return <div className="hero-slider-container marg loading">Loading...</div>;
+  if (games.length === 0) return null;
 
   return (
     <div className="hero-slider-container marg">

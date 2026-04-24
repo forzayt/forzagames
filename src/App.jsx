@@ -1,13 +1,14 @@
 import React from "react";
+import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import BrowseGames from "./pages/BrowseGames";
 
 function App() {
   return (
-    <div>
-      <HomePage />
-      <BrowseGames />
-    </div>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/browse" element={<BrowseGames />} />
+    </Routes>
   );
 }
 

@@ -1,48 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './DealGameCards.css';
-
-const gameData = [
-  {
-    title: "EA SPORTS FC™ 25",
-    originalPrice: "₹1,499",
-    discountedPrice: "₹1,199",
-    discount: "-20%",
-    image: "https://images.igdb.com/igdb/image/upload/t_720p/ar3115.webp"
-  },
-  {
-    title: "God of War Ragnarök",
-    originalPrice: "₹1,499",
-    discountedPrice: "₹1,199",
-    discount: "-20%",
-    image: "https://images.igdb.com/igdb/image/upload/t_720p/ar1qdh.webp"
-  },
-  {
-    title: "Hogwarts Legacy",
-    originalPrice: "₹3,999",
-    discountedPrice: "₹3,299",
-    discount: "-17%",
-    image: "https://images.igdb.com/igdb/image/upload/t_720p/ar79n.webp"
-  }
-];
+import steamApi from '../../services/steamApi';
+import { mapSteamGameToUI } from '../../services/dataMapper';
 
 const GamesWithAchievements = () => {
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const data = await steamApi.getFeaturedCategories();
+        // Extract games from spotlight categories
+        const spotlightGames = [];
+        Object.keys(data).forEach(key => {
+          if (data[key].id === 'cat_spotlight' || data[key].id === 'cat_dailydeal') {
+            data[key].items.forEach(item => {
+              spotlightGames.push(mapSteamGameToUI(item));
+            });
+          }
+        });
+        setGames(spotlightGames.slice(0, 3));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching deal games:', error);
+        setLoading(false);
+      }
+    };
+    fetchGames();
+  }, []);
+
+  if (loading) return <div className="deal-section loading">Loading...</div>;
+  if (games.length === 0) return null;
+
   return (
     <div className="deal-section">
       <div className="deal-container">
         <div className="deal-grid">
-          {gameData.map((game, idx) => (
+          {games.map((game, idx) => (
             <div className="deal-card transparent-card" key={idx}>
               <div className="deal-image-wrapper">
-                <img src={game.image} alt={game.title} className="deal-image" />
+                <img src={game.image} alt={game.name} className="deal-image" />
                 <div className="deal-badge">Deal of the Week</div>
               </div>
               <div className="deal-content">
-                <h3 className="deal-title">{game.title}</h3>
+                <h3 className="deal-title">{game.name}</h3>
                 <div className="deal-price">
-                  <span className="deal-discount-badge">{game.discount}</span>
-                  <span className="deal-original-price">{game.originalPrice}</span>
+                  {game.discount && <span className="deal-discount-badge">{game.discount}</span>}
+                  {game.originalPrice && <span className="deal-original-price">{game.originalPrice}</span>}
                   <span className="deal-discounted-price">{game.discountedPrice}</span>
-                  
                 </div>
               </div>
             </div>
@@ -50,14 +56,14 @@ const GamesWithAchievements = () => {
         </div>
 
         <div className="deal-slider">
-          {gameData.map((game, idx) => (
+          {games.map((game, idx) => (
             <div className="deal-card transparent-card deal-slider-card" key={idx}>
               <div className="deal-image-wrapper">
-                <img src={game.image} alt={game.title} className="deal-image" />
+                <img src={game.image} alt={game.name} className="deal-image" />
                 <div className="deal-badge">Deal of the Week</div>
               </div>
               <div className="deal-content">
-                <h3 className="deal-title">{game.title}</h3>
+                <h3 className="deal-title">{game.name}</h3>
                 <div className="deal-price">
                   {game.discount && <span className="deal-discount-badge">{game.discount}</span>}
                   {game.originalPrice && <span className="deal-original-price">{game.originalPrice}</span>}

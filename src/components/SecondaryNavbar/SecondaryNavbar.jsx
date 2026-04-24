@@ -1,24 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { BiSearch } from "react-icons/bi";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { FiHeart, FiShoppingCart } from "react-icons/fi";
-import games from "../../data/GameCardData";
+import steamApi from "../../services/steamApi";
+import { mapSteamSearchToUI } from "../../services/dataMapper";
 import "./SecondaryNavbar.css";
 
 const SubNavbar = () => {
-  const [accordionText, setAccordionText] = useState("Discover");
-  const [isAccordionOpen, setAccordionOpen] = useState(false);
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [filteredGames, setFilteredGames] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const filteredGames = games.filter(game =>
-    game.name.toLowerCase().includes(query.toLowerCase())
-  );
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (query.trim()) {
+        setLoading(true);
+        try {
+          const data = await steamApi.searchGames(query);
+          const results = (data.items || []).slice(0, 8).map(mapSteamSearchToUI);
+          setFilteredGames(results);
+        } catch (error) {
+          console.error('Search error:', error);
+          setFilteredGames([]);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setFilteredGames([]);
+      }
+    }, 500);
 
-  const handleAccordionSelect = (text) => {
-    setAccordionText(text);
-    setAccordionOpen(false);
-  };
+    return () => clearTimeout(searchTimeout);
+  }, [query]);
 
   return (
     <>
@@ -30,23 +45,6 @@ const SubNavbar = () => {
             onClick={() => setSearchOpen(prev => !prev)}
             aria-label="Toggle Search"
           />
-        </div>
-
-        <div
-          className="center_accordion"
-          role="button"
-          tabIndex={0}
-          onClick={() => setAccordionOpen(prev => !prev)}
-          onKeyDown={e => (e.key === "Enter" || e.key === " ") && setAccordionOpen(prev => !prev)}
-        >
-          <div className="accordion">
-            <p className="accordion_text">{accordionText}</p>
-            {isAccordionOpen ? (
-              <IoIosArrowUp className="icon_a" />
-            ) : (
-              <IoIosArrowDown className="icon_a" />
-            )}
-          </div>
         </div>
 
         <div className="right_wishlist_mobile">
@@ -66,30 +64,18 @@ const SubNavbar = () => {
 
         {isSearchOpen && query && (
           <div className="search_results">
-            {filteredGames.length ? (
+            {loading ? (
+              <div className="search_item">Searching...</div>
+            ) : filteredGames.length ? (
               filteredGames.map(game => (
-                <div key={game.id} className="search_item">{game.name}</div>
+                <div key={game.id} className="search_item">
+                  {game.image && <img src={game.image} alt="" className="search_thumb" />}
+                  <span>{game.name}</span>
+                </div>
               ))
             ) : (
               <div className="search_item">No results found</div>
             )}
-          </div>
-        )}
-
-        {isAccordionOpen && (
-          <div className="accordion_modal">
-            {["Discover", "Browse", "News"].map(option => (
-              <React.Fragment key={option}>
-                <a
-                  href="/"
-                  onClick={() => handleAccordionSelect(option)}
-                  className="option"
-                >
-                  {option}
-                </a>
-                <div className="line" />
-              </React.Fragment>
-            ))}
           </div>
         )}
       </div>
@@ -107,9 +93,14 @@ const SubNavbar = () => {
             />
             {query && (
               <div className="search_results desktop">
-                {filteredGames.length ? (
+                {loading ? (
+                  <div className="search_item">Searching...</div>
+                ) : filteredGames.length ? (
                   filteredGames.map(game => (
-                    <div key={game.id} className="search_item">{game.name}</div>
+                    <div key={game.id} className="search_item">
+                      {game.image && <img src={game.image} alt="" className="search_thumb" />}
+                      <span>{game.name}</span>
+                    </div>
                   ))
                 ) : (
                   <div className="search_item">No results found</div>
@@ -117,13 +108,7 @@ const SubNavbar = () => {
               </div>
             )}
           </div>
-
-          {[ ].map(option => (
-            <a key={option} href="/" className="option_desktop">{option}</a>
-          ))}
         </div>
-
-      
       </div>
     </>
   );

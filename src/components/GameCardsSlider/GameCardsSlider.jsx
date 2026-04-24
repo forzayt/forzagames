@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
-import GameCardData from "../../data/GameCardData";
+import steamApi from "../../services/steamApi";
+import { mapSteamGameToUI } from "../../services/dataMapper";
 import "./GameCardsSlider.css";
 
 const GameCard = ({ game }) => (
@@ -12,8 +13,8 @@ const GameCard = ({ game }) => (
     <p className="category">{game.category}</p>
     <h3 className="title">{game.name}</h3>
     <div className="pricing">
-      <span className="discount-badge">{game.discount}</span>
-      <span className="original-price">{game.originalPrice}</span>
+      {game.discount && <span className="discount-badge">{game.discount}</span>}
+      {game.originalPrice && <span className="original-price">{game.originalPrice}</span>}
       <span className="sale-price">{game.discountedPrice}</span>
     </div>
   </div>
@@ -22,8 +23,25 @@ const GameCard = ({ game }) => (
 const CARD_WIDTH = 180;
 
 const GameSlider = () => {
+  const [games, setGames] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(6);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const data = await steamApi.getFeaturedCategories();
+        const specials = (data.specials?.items || []).slice(0, 12).map(mapSteamGameToUI);
+        setGames(specials);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching specials:', error);
+        setLoading(false);
+      }
+    };
+    fetchGames();
+  }, []);
 
   useEffect(() => {
     function updateItemsPerView() {
@@ -38,7 +56,7 @@ const GameSlider = () => {
     return () => window.removeEventListener("resize", updateItemsPerView);
   }, []);
 
-  const maxIndex = Math.max(0, GameCardData.length - itemsPerView);
+  const maxIndex = Math.max(0, games.length - itemsPerView);
   const step = itemsPerView < 4 ? 1 : itemsPerView;
 
   const goPrevious = () =>
@@ -53,10 +71,13 @@ const GameSlider = () => {
     trackMouse: true,
   });
 
+  if (loading) return <div className="game-slider-container loading">Loading...</div>;
+  if (games.length === 0) return null;
+
   return (
     <div className="game-slider-container" {...handlers}>
       <div className="slider-header">
-        <h2 className="slider-title">Discover Something New</h2>
+        <h2 className="slider-title">Special Offers</h2>
         <div className="nav-buttons">
           <button onClick={goPrevious} disabled={currentIndex === 0} aria-label="Previous">
             <ChevronLeft />
@@ -75,12 +96,12 @@ const GameSlider = () => {
         <div
           className="cards-wrapper"
           style={{
-            width: `${GameCardData.length * CARD_WIDTH}px`,
+            width: `${games.length * CARD_WIDTH}px`,
             transform: `translateX(-${currentIndex * CARD_WIDTH}px)`,
             transition: "transform 0.5s ease-in-out",
           }}
         >
-          {GameCardData.map((game) => (
+          {games.map((game) => (
             <div
               key={game.id}
               className="card-wrapper"
