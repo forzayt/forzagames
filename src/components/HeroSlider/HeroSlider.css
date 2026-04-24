@@ -81,26 +81,13 @@
 .game-thumbnail {
   display: flex;
   align-items: center;
-  gap: 15px;
   width: 100%;
-}
-
-.thumbnail-placeholder {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: 8px;
-  background-color: #3a3a3a;
 }
 
 .game-name {
   color: white;
   opacity: 0.85;
   font-size: 14px;
-}
-
-.game-thumbnail:hover .thumbnail-placeholder {
-  filter: brightness(1.2);
 }
 
 .game-thumbnail:hover .game-name {
@@ -220,13 +207,7 @@
   }
 
   .game-thumbnail {
-    gap: 10px;
     padding-right: 24px;
-  }
-
-  .thumbnail-placeholder {
-    width: 50px;
-    height: 70px;
   }
 
   .game-name {
@@ -312,11 +293,6 @@
     border-radius: 10px;
   }
 
-  .thumbnail-placeholder {
-    width: 60px;
-    height: 80px;
-  }
-
   .game-name {
     font-size: 13px;
   }
@@ -390,13 +366,7 @@
   }
 
   .game-thumbnail {
-    gap: 10px;
     padding-right: 0;
-  }
-
-  .thumbnail-placeholder {
-    width: 45px;
-    height: 60px;
   }
 
   .game-name {

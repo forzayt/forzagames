@@ -66,11 +66,6 @@ const HeroSlider = () => {
               className={index === activeIndex ? 'active-thumbnail' : ''}
             >
               <div className="game-thumbnail">
-                <img
-                  src={game.thumbnailImage}
-                  alt={`${game.name} thumbnail`}
-                  className="thumbnail-placeholder"
-                />
                 <span className="game-name">{game.name}</span>
               </div>
             </li>
