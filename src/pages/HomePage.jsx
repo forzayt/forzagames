@@ -6,7 +6,6 @@ import GameCardsSlider from "../components/GameCardsSlider/GameCardsSlider";
 import FeaturedGameCard from "../components/FeaturedGameCard/FeaturedGameCard";
 import GameCardsSlider2 from "../components/GameCardsSlider2/GameCardsSlider2";
 import DealGameCards from "../components/DealGameCards/DealGameCards";
-import FreeGamesCard from "../components/FreeGamesCard/FreeGamesCard";
 
 const HomePage = () => {
   return (
@@ -18,7 +17,6 @@ const HomePage = () => {
       <FeaturedGameCard />
       <GameCardsSlider2 />
       <DealGameCards />
-      <FreeGamesCard />
       <div className="copyright-container">
         <p>
           © 2025, Epic Games, Inc. All rights reserved. Epic, Epic Games, the
