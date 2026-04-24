@@ -12,11 +12,6 @@ const GameCard = ({ game }) => (
     </div>
     <p className="category">{game.category}</p>
     <h3 className="title">{game.name}</h3>
-    <div className="pricing">
-      {game.discount && <span className="discount-badge">{game.discount}</span>}
-      {game.originalPrice && <span className="original-price">{game.originalPrice}</span>}
-      <span className="sale-price">{game.discountedPrice}</span>
-    </div>
   </div>
 );
 

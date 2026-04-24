@@ -41,15 +41,9 @@ const GamesWithAchievements = () => {
             <div className="deal-card transparent-card" key={idx}>
               <div className="deal-image-wrapper">
                 <img src={game.image} alt={game.name} className="deal-image" />
-                <div className="deal-badge">Deal of the Week</div>
               </div>
               <div className="deal-content">
                 <h3 className="deal-title">{game.name}</h3>
-                <div className="deal-price">
-                  {game.discount && <span className="deal-discount-badge">{game.discount}</span>}
-                  {game.originalPrice && <span className="deal-original-price">{game.originalPrice}</span>}
-                  <span className="deal-discounted-price">{game.discountedPrice}</span>
-                </div>
               </div>
             </div>
           ))}
@@ -60,15 +54,9 @@ const GamesWithAchievements = () => {
             <div className="deal-card transparent-card deal-slider-card" key={idx}>
               <div className="deal-image-wrapper">
                 <img src={game.image} alt={game.name} className="deal-image" />
-                <div className="deal-badge">Deal of the Week</div>
               </div>
               <div className="deal-content">
                 <h3 className="deal-title">{game.name}</h3>
-                <div className="deal-price">
-                  {game.discount && <span className="deal-discount-badge">{game.discount}</span>}
-                  {game.originalPrice && <span className="deal-original-price">{game.originalPrice}</span>}
-                  {game.discountedPrice && <span className="deal-discounted-price">{game.discountedPrice}</span>}
-                </div>
               </div>
             </div>
           ))}

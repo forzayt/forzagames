@@ -37,7 +37,6 @@ const GamesWithAchievements = () => {
               <div className="game-content">
                 <h3 className="game-title">{game.name}</h3>
                 <p className="game-description">{game.description}</p>
-                <div className="game-price">{game.discountedPrice}</div>
               </div>
             </div>
           ))}
@@ -51,7 +50,6 @@ const GamesWithAchievements = () => {
               <div className="game-content">
                 <h3 className="game-title">{game.name}</h3>
                 <p className="game-description">{game.description}</p>
-                <div className="game-price">{game.discountedPrice}</div>
               </div>
             </div>
           ))}

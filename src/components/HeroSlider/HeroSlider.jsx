@@ -61,12 +61,6 @@ const HeroSlider = () => {
                 )}
                 {game.subtitle && <h6 className="subtitle">{game.subtitle}</h6>}
                 <p>{game.description}</p>
-                <div className="price-container">
-                  {game.discount && <span className="discount-badge">{game.discount}</span>}
-                  {game.originalPrice && <span className="original-price">{game.originalPrice}</span>}
-                  {game.discountedPrice && <span className="discounted-price">{game.discountedPrice}</span>}
-                </div>
-                <button className="buy-now-btn">Buy Now</button>
               </div>
             </div>
           ))}
