@@ -51,17 +51,6 @@ const HeroSlider = () => {
               className={`carousel-item ${index === activeIndex ? 'active' : ''}`}
             >
               <img src={game.mainImage} className="d-block w-100" alt={game.name} />
-              <div className="carousel-caption d-none d-md-block">
-                {game.titleImage && (
-                  <img
-                    src={game.titleImage}
-                    alt={`${game.name} title`}
-                    className="game-title-img animate-title"
-                  />
-                )}
-                {game.subtitle && <h6 className="subtitle">{game.subtitle}</h6>}
-                <p>{game.description}</p>
-              </div>
             </div>
           ))}
         </div>
