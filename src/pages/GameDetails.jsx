@@ -62,15 +62,21 @@ const GameDetails = () => {
 
   return (
     <div className="game-details-container">
+      {/* Sticky Back Button */}
+      <button 
+        className="back-btn-sticky" 
+        onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}
+      >
+        <ChevronLeft size={20} /> Back
+      </button>
+
       {/* Hero Section */}
       <div 
         className="game-details-hero" 
         style={{ backgroundImage: `url(${game.background_image_additional || game.background_image})` }}
       >
         <div className="hero-overlay">
-          <button className="back-btn" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}>
-            <ChevronLeft size={20} /> Back
-          </button>
+          {/* Back button moved out for stickiness */}
           
           <div className="hero-content">
             <div className="hero-poster-wrapper">

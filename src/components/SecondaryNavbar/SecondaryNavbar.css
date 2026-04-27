@@ -10,59 +10,11 @@ body {
   font-family: Arial, sans-serif;
 }
 
-/* Main Navbar */
-.main {
-  background-color: var(--main-black);
-  color: var(--gray-text);
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
 .main_desktop {
   color: var(--gray-text);
   position: sticky;
   top: 0;
   z-index: 20;
-}
-
-.main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 60px;
-  padding: 0 16px;
-  user-select: none;
-  position: relative;
-}
-
-/* Left icon */
-.left_icon {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-/* Center accordion */
-.center_accordion {
-  flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  text-align: center;
-}
-
-.accordion {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 15px;
-}
-
-.accordion_text {
-  margin: 0;
-  color: var(--gray-text);
 }
 
 /* Icons */
@@ -161,17 +113,6 @@ body {
   animation: slideDown 0.2s ease-out;
 }
 
-.search-dropdown.mobile {
-  position: fixed;
-  top: 60px;
-  left: 0;
-  width: 100%;
-  height: calc(100vh - 60px);
-  border-radius: 0;
-  border: none;
-  background-color: #121212;
-}
-
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -228,24 +169,28 @@ body {
   font-size: 12px;
 }
 
-/* Mobile Search */
-.search-container-mobile {
+.github-link {
+  color: var(--gray-text);
+  font-size: 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background-color: #202024;
-  padding: 6px 12px;
-  border-radius: 18px;
-  width: 100%;
+  transition: color 0.2s;
+  text-decoration: none;
 }
 
-.search-container-mobile input {
-  background: transparent;
-  border: none;
+.github-link:hover {
   color: white;
-  font-size: 14px;
-  width: 100%;
-  outline: none;
+}
+
+.github-link-mobile {
+  color: var(--gray-text);
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.github-link-mobile:hover {
+  color: white;
 }
 
 /* Rest of the styles... */
@@ -351,6 +296,7 @@ body {
   justify-content: flex-end;
   flex: 0 0 auto;
   background-color: transparent;
+  gap: 16px;
 }
 
 /* Wishlist icons */
