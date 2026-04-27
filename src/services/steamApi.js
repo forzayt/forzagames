@@ -5,6 +5,40 @@ const FITGIRL_API_URL = 'https://fitgirlapi-qhc5.onrender.com/api/v1';
 // Global cache for all fetched games to enable local search
 const gamesCache = new Map();
 
+const CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
+const CACHE_PREFIX = 'game_cache_';
+
+const saveToLocalStorage = (id, data) => {
+  try {
+    const cacheData = {
+      data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(`${CACHE_PREFIX}${id}`, JSON.stringify(cacheData));
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+};
+
+const getFromLocalStorage = (id) => {
+  try {
+    const cached = localStorage.getItem(`${CACHE_PREFIX}${id}`);
+    if (!cached) return null;
+
+    const { data, timestamp } = JSON.parse(cached);
+    const isExpired = Date.now() - timestamp > CACHE_EXPIRY;
+
+    if (isExpired) {
+      localStorage.removeItem(`${CACHE_PREFIX}${id}`);
+      return null;
+    }
+    return data;
+  } catch (error) {
+    console.error('Error reading from localStorage:', error);
+    return null;
+  }
+};
+
 // Import all JSON files from the data/id directory
 const categoryFiles = import.meta.glob('../data/id/*.json', { eager: true });
 
@@ -23,20 +57,31 @@ export const steamApi = {
 
   // Get details from Fitgirl API (used for both cards and details page)
   getGameDetails: async (id) => {
-    // Check cache first
-    if (gamesCache.has(id.toString())) {
-      return gamesCache.get(id.toString());
+    const idStr = id.toString();
+
+    // 1. Check in-memory cache first
+    if (gamesCache.has(idStr)) {
+      return gamesCache.get(idStr);
     }
 
+    // 2. Check localStorage
+    const cachedData = getFromLocalStorage(idStr);
+    if (cachedData) {
+      gamesCache.set(idStr, cachedData);
+      return cachedData;
+    }
+
+    // 3. Fetch from API if not in cache
     try {
       const response = await fetch(`${FITGIRL_API_URL}/${id}`);
       if (!response.ok) throw new Error('Game not found');
       const data = await response.json();
       const mapped = mapFitgirlToUI(data);
       
-      // Save to cache for local searching
+      // Save to both caches
       if (mapped) {
-        gamesCache.set(id.toString(), mapped);
+        gamesCache.set(idStr, mapped);
+        saveToLocalStorage(idStr, mapped);
       }
       
       return mapped;
