@@ -31,7 +31,7 @@ const GameDetails = () => {
         setLoading(true);
         const response = await fetch(`https://fitgirlapi-qhc5.onrender.com/api/v1/${id}`);
         if (!response.ok) {
-          throw new Error("Failed to fetch game details");
+          throw new Error("");
         }
         const data = await response.json();
         setGame(data);
@@ -59,7 +59,7 @@ const GameDetails = () => {
   if (error || !game) {
     return (
       <div className="game-details-error">
-        <h2>Oops! Something went wrong.</h2>
+        <h2>Oops! </h2>
         <p>{error}</p>
         <button onClick={() => navigate("/")} className="back-btn">Go Back Home</button>
       </div>
