@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, Download, Monitor, X, ArrowUp, Star, Calendar, PlayCircle, Globe, Info } from "lucide-react";
 import "./GameDetails.css";
@@ -10,10 +10,11 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
   const [progress, setProgress] = useState(0);
   const [speeds, setSpeeds] = useState({ download: 0, upload: 0 });
   const [selectedHoster, setSelectedHoster] = useState(null);
+  const [currentPart, setCurrentPart] = useState(0);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   useEffect(() => {
     // Phase 1: Connecting (5 seconds)
-    // We use a single state update for progress to trigger CSS transition
     const connTimer = setTimeout(() => {
       setProgress(100);
     }, 100);
@@ -32,7 +33,7 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
     if (phase !== "speedtest") return;
 
     const testDuration = 10000;
-    const updateInterval = 200; // Reduced frequency to 5 times per second
+    const updateInterval = 200;
     let elapsed = 0;
 
     const testTimer = setInterval(() => {
@@ -45,11 +46,51 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
       if (elapsed >= testDuration) {
         clearInterval(testTimer);
         setPhase("finished");
+        
+        const ffKey = Object.keys(groupedLinks).find(k => k.toLowerCase() === 'fuckingfast');
+        if (ffKey) {
+          setSelectedHoster(ffKey);
+        } else if (Object.keys(groupedLinks).length > 0) {
+          setSelectedHoster(Object.keys(groupedLinks)[0]);
+        }
       }
     }, updateInterval);
 
     return () => clearInterval(testTimer);
-  }, [phase]);
+  }, [phase, groupedLinks]);
+
+  const handleStartDownload = async () => {
+    if (!selectedHoster || !groupedLinks[selectedHoster]) return;
+    
+    setPhase("downloading");
+    const links = groupedLinks[selectedHoster];
+    const totalParts = links.length;
+
+    for (let i = 0; i < totalParts; i++) {
+      setCurrentPart(i + 1);
+      // Simulate progress for each part
+      for (let p = 0; p <= 100; p += 10) {
+        setDownloadProgress(Math.round(((i * 100) + p) / totalParts));
+        await new Promise(r => setTimeout(r, 150));
+      }
+      // Open the actual link
+      window.open(links[i].url, '_blank');
+      // Small delay between opening tabs to avoid browser blocking
+      await new Promise(r => setTimeout(r, 800));
+    }
+    
+    setDownloadProgress(100);
+    setTimeout(() => {
+      setPhase("completed");
+    }, 1000);
+  };
+
+  const totalSize = useMemo(() => {
+    if (!selectedHoster || !groupedLinks[selectedHoster]) return null;
+    // Try to sum up sizes if they exist and are in consistent format (e.g. "1.2 GB")
+    // For now just check if they exist
+    return groupedLinks[selectedHoster][0]?.size ? "Multiple Parts" : null;
+  }, [selectedHoster, groupedLinks]);
 
   return (
     <div className="download-popup-overlay" onClick={onClose}>
@@ -113,53 +154,75 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
 
         {phase === "finished" && (
           <div className="selection-phase-content">
-            {!selectedHoster ? (
-              <>
-                <div className="popup-header">
-                  <div className="success-icon">✓</div>
-                  <h3>Select Download Server</h3>
+            <div className="popup-header">
+              <div className="success-icon">✓</div>
+              <h3>Download Ready</h3>
+            </div>
+            
+            <div className="download-summary-card">
+              <div className="summary-item">
+                <span className="summary-label">Selected Server</span>
+                <span className="summary-value highlight">{selectedHoster}</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Total Parts</span>
+                <span className="summary-value">{groupedLinks[selectedHoster]?.length || 0} Parts</span>
+              </div>
+              {groupedLinks[selectedHoster]?.[0]?.size && (
+                <div className="summary-item">
+                  <span className="summary-label">Est. Size</span>
+                  <span className="summary-value">{groupedLinks[selectedHoster][0].size} per part</span>
                 </div>
-                <p className="server-status">Optimization complete. Choose a server to begin your download.</p>
-                <div className="hoster-options-grid">
-                  {Object.keys(groupedLinks).map(hoster => (
-                    <button 
-                      key={hoster} 
-                      className="hoster-option-btn"
-                      onClick={() => setSelectedHoster(hoster)}
-                    >
-                      <span className="option-name">{hoster}</span>
-                      <span className="option-count">{groupedLinks[hoster].length} Parts</span>
-                    </button>
-                  ))}
+              )}
+            </div>
+
+            <button className="main-download-btn" onClick={handleStartDownload}>
+              <Download size={20} /> Start Download Now
+            </button>
+            
+            <p className="download-hint">Parts will be queued sequentially in your browser</p>
+          </div>
+        )}
+
+        {phase === "downloading" && (
+          <div className="downloading-phase-content">
+            <div className="popup-header">
+              <div className="download-icon-anim active">
+                <Download size={32} />
+              </div>
+              <h3>Downloading Parts</h3>
+            </div>
+            
+            <div className="download-status-info">
+              <span className="part-counter">Part {currentPart} of {groupedLinks[selectedHoster]?.length}</span>
+              <span className="progress-percent">{downloadProgress}%</span>
+            </div>
+
+            <div className="progress-container">
+              <div className="progress-bar-wrapper large">
+                <div 
+                  className="progress-bar-fill animated" 
+                  style={{ width: `${downloadProgress}%` }}
+                >
+                  <div className="progress-shimmer"></div>
                 </div>
-              </>
-            ) : (
-              <>
-                <div className="popup-header">
-                  <button className="back-to-hosters" onClick={() => setSelectedHoster(null)}>
-                    <ChevronLeft size={18} /> Back
-                  </button>
-                  <h3>{selectedHoster}</h3>
-                </div>
-                <div className="popup-links-list">
-                  {groupedLinks[selectedHoster].map((link, idx) => (
-                    <a 
-                      key={idx} 
-                      href={link.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="popup-download-link"
-                    >
-                      <span className="link-part-name">
-                        {groupedLinks[selectedHoster].length > 1 ? `Download Part ${idx + 1}` : 'Direct Download'}
-                      </span>
-                      {link.size && <span className="link-part-size">{link.size}</span>}
-                      <Download size={16} />
-                    </a>
-                  ))}
-                </div>
-              </>
-            )}
+              </div>
+            </div>
+            
+            <p className="server-status">Please do not close this popup until all parts are queued.</p>
+          </div>
+        )}
+
+        {phase === "completed" && (
+          <div className="completed-phase-content">
+            <div className="popup-header">
+              <div className="success-icon large">✓</div>
+              <h3>All Parts Queued</h3>
+            </div>
+            <p className="server-status">All download parts have been sent to your browser. You can now close this window.</p>
+            <button className="main-download-btn secondary" onClick={onClose}>
+              Close Popup
+            </button>
           </div>
         )}
 
@@ -182,12 +245,14 @@ const GameDetails = () => {
   const [showDownloadPopup, setShowDownloadPopup] = useState(false);
 
   // Group download links by hoster/category
-  const groupedLinks = game?.download_links?.reduce((acc, link) => {
-    const hoster = link.hoster || 'Mirror';
-    if (!acc[hoster]) acc[hoster] = [];
-    acc[hoster].push(link);
-    return acc;
-  }, {}) || {};
+  const groupedLinks = useMemo(() => {
+    return game?.download_links?.reduce((acc, link) => {
+      const hoster = link.hoster || 'Mirror';
+      if (!acc[hoster]) acc[hoster] = [];
+      acc[hoster].push(link);
+      return acc;
+    }, {}) || {};
+  }, [game]);
 
   const handleDownloadClick = () => {
     setShowDownloadPopup(true);
