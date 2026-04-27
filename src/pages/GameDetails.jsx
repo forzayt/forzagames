@@ -98,6 +98,10 @@ const GameDetails = () => {
                   <span><Info size={18} /> {game.developers[0].name}</span>
                 )}
               </div>
+
+              <button className="hero-download-btn">
+                <Download size={24} /> Download
+              </button>
             </div>
           </div>
         </div>

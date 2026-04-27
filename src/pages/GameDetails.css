@@ -508,6 +508,7 @@
 /* Media Section (Scroll Snap Grid) */
 .media-section {
   margin-top: 30px;
+  margin-bottom: 40px;
   padding-bottom: 20px;
 }
 
@@ -665,6 +666,37 @@
   box-shadow: 0 15px 30px rgba(255, 51, 102, 0.6);
 }
 
+/* Hero Download Button */
+.hero-download-btn {
+  margin-top: 35px;
+  background: linear-gradient(135deg, #ff3366 0%, #ff6b6b 100%);
+  color: white;
+  border: none;
+  padding: 16px 45px;
+  border-radius: 16px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 30px rgba(255, 51, 102, 0.4);
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.hero-download-btn:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 15px 40px rgba(255, 51, 102, 0.6);
+  background: linear-gradient(135deg, #ff4d7d 0%, #ff8585 100%);
+}
+
+.hero-download-btn:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .content-main-grid {
@@ -694,6 +726,10 @@
 
   .genres {
     justify-content: center;
+  }
+
+  .hero-download-btn {
+    margin: 30px auto 0;
   }
 
   .meta-compact {
