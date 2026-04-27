@@ -68,7 +68,7 @@ const GameDetails = () => {
         style={{ backgroundImage: `url(${game.background_image_additional || game.background_image})` }}
       >
         <div className="hero-overlay">
-          <button className="back-btn" onClick={() => navigate(-1)}>
+          <button className="back-btn" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}>
             <ChevronLeft size={20} /> Back
           </button>
           
@@ -104,6 +104,40 @@ const GameDetails = () => {
       </div>
 
       <div className="game-details-content">
+        {/* Media Section: Trailers & Screenshots moved up */}
+        {(game.movies?.length > 0 || game.screenshots?.length > 0) && (
+          <section className="detail-section media-section">
+            <h2>Media & Screenshots</h2>
+            <div className="media-scroller">
+              {/* Trailers */}
+              {game.movies?.map(movie => (
+                <div 
+                  key={movie.id} 
+                  className="media-item video-item"
+                  onClick={() => window.open(movie.hls, '_blank')}
+                  title="Open Video Stream"
+                >
+                  <img src={movie.thumbnail} alt={movie.name} />
+                  <div className="play-overlay">
+                    <PlayCircle size={48} />
+                    <span>Trailer</span>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Screenshots */}
+              {game.screenshots?.slice(0, 15).map(ss => (
+                <div 
+                  key={ss.id} 
+                  className="media-item"
+                  onClick={() => setSelectedMedia(ss.image)}
+                >
+                  <img src={ss.image} alt="Gameplay Screenshot" />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
         
         <div className="content-main-grid">
           <div className="content-left">
@@ -205,41 +239,6 @@ const GameDetails = () => {
             </div>
           )}
         </section>
-
-        {/* Media Section: Trailers & Screenshots */}
-        {(game.movies?.length > 0 || game.screenshots?.length > 0) && (
-          <section className="detail-section media-section">
-            <h2>Media & Screenshots</h2>
-            <div className="media-scroller">
-              {/* Trailers */}
-              {game.movies?.map(movie => (
-                <div 
-                  key={movie.id} 
-                  className="media-item video-item"
-                  onClick={() => window.open(movie.hls, '_blank')}
-                  title="Open Video Stream"
-                >
-                  <img src={movie.thumbnail} alt={movie.name} />
-                  <div className="play-overlay">
-                    <PlayCircle size={48} />
-                    <span>Trailer</span>
-                  </div>
-                </div>
-              ))}
-              
-              {/* Screenshots */}
-              {game.screenshots?.slice(0, 15).map(ss => (
-                <div 
-                  key={ss.id} 
-                  className="media-item"
-                  onClick={() => setSelectedMedia(ss.image)}
-                >
-                  <img src={ss.image} alt="Gameplay Screenshot" />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
 
       {/* Screenshot Modal */}
