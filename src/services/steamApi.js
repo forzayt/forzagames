@@ -47,10 +47,14 @@ export const steamApi = {
   getCategories: () => {
     return Object.entries(categoryFiles).map(([path, module]) => {
       const name = path.split('/').pop().replace('.json', '');
+      const ids = Array.isArray(module.default) ? module.default : [module.default];
+      // Deduplicate IDs to prevent React key warnings
+      const uniqueIds = [...new Set(ids)];
+      
       return {
         id: name,
         title: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '),
-        ids: Array.isArray(module.default) ? module.default : [module.default]
+        ids: uniqueIds
       };
     });
   },

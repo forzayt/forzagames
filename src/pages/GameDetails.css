@@ -303,6 +303,13 @@
   border-radius: 12px;
   margin: 1em 0;
   border: 1px solid rgba(255,255,255,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.about-text img:hover, .about-text video:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 51, 102, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 /* System Requirements */
