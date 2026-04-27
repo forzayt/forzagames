@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Download, Monitor, HardDrive, Cpu, Layers, X, ArrowUp } from "lucide-react";
+import { ChevronLeft, Download, Monitor, X, ArrowUp, Star, Calendar } from "lucide-react";
 import "./GameDetails.css";
+
+const API_KEY = import.meta.env.VITE_RAWG_API_KEY;
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -29,11 +31,17 @@ const GameDetails = () => {
     const fetchGameDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`https://fitgirlapi-qhc5.onrender.com/api/v1/${id}`);
+        const response = await fetch(`https://api.rawg.io/api/games/${id}?key=${API_KEY}`);
         if (!response.ok) {
-          throw new Error("");
+          throw new Error("Failed to fetch game details");
         }
         const data = await response.json();
+        
+        // Fetch screenshots separately as RAWG detail doesn't include all
+        const screenshotResponse = await fetch(`https://api.rawg.io/api/games/${id}/screenshots?key=${API_KEY}`);
+        const screenshotData = await screenshotResponse.json();
+        data.screenshots = screenshotData.results || [];
+
         setGame(data);
         setLoading(false);
       } catch (err) {
@@ -43,7 +51,6 @@ const GameDetails = () => {
     };
 
     fetchGameDetails();
-    // Scroll to top on mount
     window.scrollTo(0, 0);
   }, [id]);
 
@@ -66,43 +73,34 @@ const GameDetails = () => {
     );
   }
 
-  const { steam_data: steam, download_data: downloads } = game;
-  
-  // Group download links by category
-  const linksByCategory = downloads?.parsed_links?.reduce((acc, link) => {
-    if (!acc[link.category]) acc[link.category] = [];
-    acc[link.category].push(link.url);
-    return acc;
-  }, {}) || {};
-
   return (
     <div className="game-details-container">
       {/* Hero Section */}
       <div 
         className="game-details-hero" 
-        style={{ backgroundImage: `url(${steam.screenshots?.[0]?.path_full || steam.header_image})` }}
+        style={{ backgroundImage: `url(${game.background_image_additional || game.background_image})` }}
       >
         <div className="hero-overlay">
           <button className="back-btn" onClick={() => navigate(-1)}>
             <ChevronLeft size={24} /> Back
           </button>
           <div className="hero-content">
-            <img src={steam.header_image} alt={steam.name} className="game-cover" />
+            <img src={game.background_image} alt={game.name} className="game-cover" />
             <div className="hero-info">
-              <h1>{steam.name}</h1>
-              <div className="genres">
-                {steam.genres?.map(g => <span key={g.id} className="genre-tag">{g.description}</span>)}
+              <div className="badges">
+                {game.metacritic && <span className="metascore">Metascore: {game.metacritic}</span>}
+                <span className="rating"><Star size={16} fill="currentColor" /> {game.rating}</span>
               </div>
-              <p className="short-desc" dangerouslySetInnerHTML={{ __html: steam.short_description }}></p>
+              <h1>{game.name}</h1>
+              <div className="genres">
+                {game.genres?.map(g => <span key={g.id} className="genre-tag">{g.name}</span>)}
+              </div>
+              <p className="short-desc">{game.description_raw?.slice(0, 300)}...</p>
               
-              {Object.keys(linksByCategory).length > 0 && (
-                <button 
-                  className="hero-download-btn"
-                  onClick={() => document.getElementById('downloads-section')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  <Download size={24} /> Download Now
-                </button>
-              )}
+              <div className="meta-compact">
+                <span><Calendar size={18} /> {game.released}</span>
+                <span><Monitor size={18} /> {game.platforms?.map(p => p.platform.name).slice(0, 3).join(', ')}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -112,86 +110,38 @@ const GameDetails = () => {
         {/* About Section */}
         <section className="detail-section">
           <h2>About The Game</h2>
-          <div className="about-text" dangerouslySetInnerHTML={{ __html: steam.about_the_game }}></div>
+          <div className="about-text" dangerouslySetInnerHTML={{ __html: game.description }}></div>
         </section>
 
-        {/* Trailer Section */}
-        {steam.movies && steam.movies.length > 0 && (
-          <section className="detail-section trailer-section">
-            <h2>Trailer</h2>
-            <div className="video-container">
-              <video 
-                controls 
-                poster={steam.movies[0].thumbnail}
-                className="game-trailer"
-                key={steam.movies[0].id}
-              >
-                {/* Try webm sources */}
-                {steam.movies[0].webm?.max && <source src={steam.movies[0].webm.max} type="video/webm" />}
-                {steam.movies[0].webm?.['480'] && <source src={steam.movies[0].webm['480']} type="video/webm" />}
-                {typeof steam.movies[0].webm === 'string' && <source src={steam.movies[0].webm} type="video/webm" />}
-                
-                {/* Try mp4 sources */}
-                {steam.movies[0].mp4?.max && <source src={steam.movies[0].mp4.max} type="video/mp4" />}
-                {steam.movies[0].mp4?.['480'] && <source src={steam.movies[0].mp4['480']} type="video/mp4" />}
-                {typeof steam.movies[0].mp4 === 'string' && <source src={steam.movies[0].mp4} type="video/mp4" />}
-                
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </section>
-        )}
-
         {/* Screenshots Section */}
-        {steam.screenshots && steam.screenshots.length > 0 && (
+        {game.screenshots && game.screenshots.length > 0 && (
           <section className="detail-section">
             <h2>Screenshots</h2>
             <div className="screenshots-grid">
-              {steam.screenshots.slice(0, 8).map(ss => (
+              {game.screenshots.slice(0, 8).map(ss => (
                 <img 
                   key={ss.id} 
-                  src={ss.path_full} 
+                  src={ss.image} 
                   alt="Screenshot" 
                   className="screenshot" 
-                  onClick={() => setSelectedScreenshot(ss.path_full)}
+                  onClick={() => setSelectedScreenshot(ss.image)}
                 />
               ))}
             </div>
           </section>
         )}
 
-        {/* Download Links Section */}
-        {Object.keys(linksByCategory).length > 0 && (
-          <section id="downloads-section" className="detail-section downloads-section">
-            <h2><Download size={24} /> Download Links</h2>
-            <div className="download-groups">
-              {Object.entries(linksByCategory).map(([category, urls]) => (
-                <div key={category} className="download-group">
-                  <h3>{category}</h3>
-                  <div className="links-list">
-                    {urls.map((url, idx) => (
-                      <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="download-link">
-                        {urls.length === 1 ? 'Download' : `Part ${idx + 1}`}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* System Requirements */}
-        {steam.pc_requirements && (
+        {/* System Requirements (if available) */}
+        {game.platforms?.find(p => p.platform.name === "PC")?.requirements && (
           <section className="detail-section sys-req">
-            <h2>System Requirements</h2>
+            <h2>System Requirements (PC)</h2>
             <div className="req-grid">
               <div className="req-block">
-                <div dangerouslySetInnerHTML={{ __html: steam.pc_requirements.minimum }}></div>
+                <div dangerouslySetInnerHTML={{ __html: game.platforms.find(p => p.platform.name === "PC").requirements.minimum }}></div>
               </div>
-              {steam.pc_requirements.recommended && (
+              {game.platforms.find(p => p.platform.name === "PC").requirements.recommended && (
                 <div className="req-block">
-                  <div dangerouslySetInnerHTML={{ __html: steam.pc_requirements.recommended }}></div>
+                  <div dangerouslySetInnerHTML={{ __html: game.platforms.find(p => p.platform.name === "PC").requirements.recommended }}></div>
                 </div>
               )}
             </div>
@@ -202,29 +152,23 @@ const GameDetails = () => {
         <section className="detail-section meta-info">
           <h2>Game Details</h2>
           <div className="meta-grid">
-            {steam.developers && (
-              <div className="meta-item"><strong>Developer:</strong> {steam.developers.join(", ")}</div>
+            {game.developers && (
+              <div className="meta-item"><strong>Developer:</strong> {game.developers.map(d => d.name).join(", ")}</div>
             )}
-            {steam.publishers && (
-              <div className="meta-item"><strong>Publisher:</strong> {steam.publishers.join(", ")}</div>
+            {game.publishers && (
+              <div className="meta-item"><strong>Publisher:</strong> {game.publishers.map(p => p.name).join(", ")}</div>
             )}
-            {steam.metacritic && (
-              <div className="meta-item">
-                <strong>Metacritic Score:</strong> 
-                <span className="metascore">{steam.metacritic.score}</span>
+            {game.tags && (
+              <div className="features-container">
+                <strong>Tags:</strong>
+                <div className="features-list">
+                  {game.tags.slice(0, 15).map(t => (
+                    <span key={t.id} className="feature-badge">{t.name}</span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-          {steam.categories && (
-            <div className="features-container">
-              <strong>Features:</strong>
-              <div className="features-list">
-                {steam.categories.map(c => (
-                  <span key={c.id} className="feature-badge">{c.description}</span>
-                ))}
-              </div>
-            </div>
-          )}
         </section>
       </div>
 

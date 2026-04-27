@@ -1,38 +1,29 @@
-export const mapSteamGameToUI = (steamGame) => {
-  const currencySymbol = steamGame.currency === 'INR' ? '₹' : steamGame.currency === 'USD' ? '$' : steamGame.currency || '';
-  
-  // Steam prices are usually in subunits (cents/paisa)
-  const formatPrice = (price) => {
-    if (price === 0) return 'Free';
-    if (!price) return '';
-    return `${currencySymbol}${(price / 100).toLocaleString()}`;
-  };
-
+export const mapSteamGameToUI = (game) => {
   return {
-    id: steamGame.id,
-    name: steamGame.name,
-    category: steamGame.type === 0 ? 'Base Game' : steamGame.type === 1 ? 'DLC' : 'Game',
-    discount: steamGame.discount_percent > 0 ? `-${steamGame.discount_percent}%` : null,
-    originalPrice: steamGame.original_price ? formatPrice(steamGame.original_price) : null,
-    discountedPrice: steamGame.final_price ? formatPrice(steamGame.final_price) : null,
-    image: steamGame.large_capsule_image || steamGame.header_image,
+    id: game.id,
+    name: game.name,
+    category: game.genres?.[0]?.name || 'Game',
+    discount: game.rating > 4.5 ? 'Must Play' : null,
+    originalPrice: null,
+    discountedPrice: game.metacritic ? `Score: ${game.metacritic}` : 'N/A',
+    image: game.background_image,
     // For HeroSlider
-    mainImage: steamGame.large_capsule_image || steamGame.header_image,
-    thumbnailImage: steamGame.small_capsule_image || steamGame.header_image,
-    titleImage: steamGame.header_image, // Fallback as Steam doesn't provide logo in featured
-    description: steamGame.headline || '', // Some endpoints provide headline
-    subtitle: steamGame.type === 0 ? 'Base Game' : 'Special Edition',
+    mainImage: game.background_image,
+    thumbnailImage: game.background_image,
+    titleImage: game.background_image,
+    description: game.released ? `Released: ${game.released}` : '',
+    subtitle: game.platforms?.map(p => p.platform.name).slice(0, 2).join(', ') || 'Various Platforms',
   };
 };
 
 export const mapSteamSearchToUI = (item) => {
   return {
-    id: item.id || item.appid,
+    id: item.id,
     name: item.name,
-    category: 'Game',
-    discount: item.discount_percent > 0 ? `-${item.discount_percent}%` : null,
-    originalPrice: item.original_price,
-    discountedPrice: item.final_price,
-    image: item.tiny_image || item.logo || item.image || `https://cdn.cloudflare.steamstatic.com/steam/apps/${item.id || item.appid}/header.jpg`,
+    category: item.genres?.[0]?.name || 'Game',
+    discount: null,
+    originalPrice: null,
+    discountedPrice: item.released,
+    image: item.background_image,
   };
 };
