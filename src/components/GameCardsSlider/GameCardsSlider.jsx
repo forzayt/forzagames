@@ -5,13 +5,28 @@ import steamApi from "../../services/steamApi";
 import { useNavigate } from "react-router-dom";
 import "./GameCardsSlider.css";
 
-const GameCard = ({ game, onClick }) => (
-  <div onClick={onClick} className="game-card" style={{ cursor: 'pointer' }}>
+const GameCard = ({ game, onClick, index }) => (
+  <div 
+    onClick={onClick} 
+    className="game-card" 
+    style={{ 
+      cursor: 'pointer',
+      animationDelay: `${index * 0.1}s`
+    }}
+  >
     <div className="image-container">
       <img src={game.image} alt={game.name} className="game-image" />
     </div>
     <p className="category">{game.category}</p>
     <h3 className="title">{game.name}</h3>
+  </div>
+);
+
+const GameCardSkeleton = () => (
+  <div className="skeleton-card">
+    <div className="skeleton-image" />
+    <div className="skeleton-text" />
+    <div className="skeleton-title" />
   </div>
 );
 
@@ -29,14 +44,22 @@ const GameSlider = ({ title = "Special Offers", category = "specials", gameIds =
       try {
         setLoading(true);
         if (gameIds && gameIds.length > 0) {
-          const results = await Promise.all(
-            gameIds.map(id => steamApi.getGameDetails(id))
-          );
+          // Initialize with nulls to show skeletons
+          setGames(new Array(gameIds.length).fill(null));
           
-          const validGames = results.filter(Boolean);
-          setGames(validGames);
+          // Fetch games one by one to show progressive loading
+          for (let i = 0; i < gameIds.length; i++) {
+            const id = gameIds[i];
+            const gameData = await steamApi.getGameDetails(id);
+            if (gameData) {
+              setGames(prev => {
+                const newGames = [...prev];
+                newGames[i] = gameData;
+                return newGames;
+              });
+            }
+          }
         } else {
-          // Fallback to legacy behavior if no gameIds provided
           const data = await steamApi.getFeaturedCategories();
           const items = data[category]?.items || [];
           setGames(items);
@@ -78,8 +101,7 @@ const GameSlider = ({ title = "Special Offers", category = "specials", gameIds =
     trackMouse: true,
   });
 
-  if (loading) return <div className="game-slider-container loading">Loading...</div>;
-  if (games.length === 0) return null;
+  if (games.length === 0 && !loading) return null;
 
   return (
     <div className="game-slider-container" {...handlers}>
@@ -108,13 +130,21 @@ const GameSlider = ({ title = "Special Offers", category = "specials", gameIds =
             transition: "transform 0.5s ease-in-out",
           }}
         >
-          {games.map((game) => (
+          {games.map((game, index) => (
             <div
-              key={game.id}
+              key={game ? game.id : `skeleton-${index}`}
               className="card-wrapper"
               style={{ width: `${CARD_WIDTH}px` }}
             >
-              <GameCard game={game} onClick={() => navigate(`/game/${game.id}`)} />
+              {game ? (
+                <GameCard 
+                  game={game} 
+                  onClick={() => navigate(`/game/${game.id}`)} 
+                  index={index}
+                />
+              ) : (
+                <GameCardSkeleton />
+              )}
             </div>
           ))}
         </div>
