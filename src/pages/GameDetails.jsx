@@ -5,10 +5,11 @@ import "./GameDetails.css";
 
 import steamApi from "../services/steamApi";
 
-const DownloadPopup = React.memo(({ onClose }) => {
+const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
   const [phase, setPhase] = useState("connecting");
   const [progress, setProgress] = useState(0);
   const [speeds, setSpeeds] = useState({ download: 0, upload: 0 });
+  const [selectedHoster, setSelectedHoster] = useState(null);
 
   useEffect(() => {
     // Phase 1: Connecting (5 seconds)
@@ -44,16 +45,17 @@ const DownloadPopup = React.memo(({ onClose }) => {
       if (elapsed >= testDuration) {
         clearInterval(testTimer);
         setPhase("finished");
-        setTimeout(onClose, 2500);
       }
     }, updateInterval);
 
     return () => clearInterval(testTimer);
-  }, [phase, onClose]);
+  }, [phase]);
 
   return (
-    <div className="download-popup-overlay">
-      <div className="download-popup-content">
+    <div className="download-popup-overlay" onClick={onClose}>
+      <div className="download-popup-content" onClick={e => e.stopPropagation()}>
+        <button className="popup-close-btn" onClick={onClose}><X size={20} /></button>
+        
         {phase === "connecting" && (
           <>
             <div className="popup-header">
@@ -110,18 +112,55 @@ const DownloadPopup = React.memo(({ onClose }) => {
         )}
 
         {phase === "finished" && (
-          <>
-            <div className="popup-header">
-              <div className="success-icon">✓</div>
-              <h3>Ready to Download</h3>
-            </div>
-            <p className="server-status">Connection optimized. Your download is ready to begin at max speed!</p>
-            <div className="final-check">
-              <span>Server: FitGirl Repack Global #1</span>
-              <span>Encryption: AES-256</span>
-              <span>Latency: 14ms</span>
-            </div>
-          </>
+          <div className="selection-phase-content">
+            {!selectedHoster ? (
+              <>
+                <div className="popup-header">
+                  <div className="success-icon">✓</div>
+                  <h3>Select Download Server</h3>
+                </div>
+                <p className="server-status">Optimization complete. Choose a server to begin your download.</p>
+                <div className="hoster-options-grid">
+                  {Object.keys(groupedLinks).map(hoster => (
+                    <button 
+                      key={hoster} 
+                      className="hoster-option-btn"
+                      onClick={() => setSelectedHoster(hoster)}
+                    >
+                      <span className="option-name">{hoster}</span>
+                      <span className="option-count">{groupedLinks[hoster].length} Parts</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="popup-header">
+                  <button className="back-to-hosters" onClick={() => setSelectedHoster(null)}>
+                    <ChevronLeft size={18} /> Back
+                  </button>
+                  <h3>{selectedHoster}</h3>
+                </div>
+                <div className="popup-links-list">
+                  {groupedLinks[selectedHoster].map((link, idx) => (
+                    <a 
+                      key={idx} 
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="popup-download-link"
+                    >
+                      <span className="link-part-name">
+                        {groupedLinks[selectedHoster].length > 1 ? `Download Part ${idx + 1}` : 'Direct Download'}
+                      </span>
+                      {link.size && <span className="link-part-size">{link.size}</span>}
+                      <Download size={16} />
+                    </a>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         )}
 
         <div className="popup-footer">
@@ -141,6 +180,14 @@ const GameDetails = () => {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showDownloadPopup, setShowDownloadPopup] = useState(false);
+
+  // Group download links by hoster/category
+  const groupedLinks = game?.download_links?.reduce((acc, link) => {
+    const hoster = link.hoster || 'Mirror';
+    if (!acc[hoster]) acc[hoster] = [];
+    acc[hoster].push(link);
+    return acc;
+  }, {}) || {};
 
   const handleDownloadClick = () => {
     setShowDownloadPopup(true);
@@ -307,36 +354,11 @@ const GameDetails = () => {
                 </div>
               </section>
             )}
+
+
           </div>
           
-          {/* Download links section hidden per user request
-          <div className="content-right">
-            {game.download_links && game.download_links.length > 0 && (
-              <section className="detail-section download-section">
-                <h2>Download Repacks</h2>
-                <div className="download-list">
-                  {game.download_links.map((link, index) => (
-                    <a 
-                      key={index} 
-                      href={link.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="download-card"
-                    >
-                      <div className="download-icon">
-                        <Download size={20} />
-                      </div>
-                      <div className="download-info">
-                        <span className="hoster-name">{link.hoster || 'Mirror ' + (index + 1)}</span>
-                        {link.size && <span className="download-size">{link.size}</span>}
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-          */}
+          {/* Download links section hidden per user request */}
         </div>
 
         {/* Additional Info Sidebar - Now Full Width */}
@@ -397,7 +419,10 @@ const GameDetails = () => {
 
       {/* Download Gimmick Popup */}
       {showDownloadPopup && (
-        <DownloadPopup onClose={() => setShowDownloadPopup(false)} />
+        <DownloadPopup 
+          onClose={() => setShowDownloadPopup(false)} 
+          groupedLinks={groupedLinks}
+        />
       )}
 
       {/* Scroll to Top Button */}
