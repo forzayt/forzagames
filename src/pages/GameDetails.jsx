@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Download, Monitor, X, ArrowUp, Star, Calendar, PlayCircle, Globe, Info } from "lucide-react";
+import { ChevronLeft, Download, Monitor, X, ArrowUp, Star, Calendar, PlayCircle, Globe, Info, Copy, Terminal, CheckCircle2, FolderDown, AlertTriangle } from "lucide-react";
 import "./GameDetails.css";
 
 import steamApi from "../services/steamApi";
@@ -12,16 +12,19 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
   const [selectedHoster, setSelectedHoster] = useState(null);
   const [currentPart, setCurrentPart] = useState(0);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [fsError, setFsError] = useState(null);
+  const [isPicking, setIsPicking] = useState(false);
 
   useEffect(() => {
-    // Phase 1: Connecting (5 seconds)
+    // Phase 1: Connecting (Faster now)
     const connTimer = setTimeout(() => {
       setProgress(100);
     }, 100);
 
     const phaseTimer = setTimeout(() => {
       setPhase("speedtest");
-    }, 5100);
+    }, 1500);
 
     return () => {
       clearTimeout(connTimer);
@@ -32,7 +35,7 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
   useEffect(() => {
     if (phase !== "speedtest") return;
 
-    const testDuration = 10000;
+    const testDuration = 3000; // Faster speed test
     const updateInterval = 200;
     let elapsed = 0;
 
@@ -47,11 +50,11 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
         clearInterval(testTimer);
         setPhase("finished");
         
-        const ffKey = Object.keys(groupedLinks).find(k => k.toLowerCase() === 'fuckingfast');
-        if (ffKey) {
-          setSelectedHoster(ffKey);
-        } else if (Object.keys(groupedLinks).length > 0) {
-          setSelectedHoster(Object.keys(groupedLinks)[0]);
+        const hosters = Object.keys(groupedLinks);
+        if (hosters.length > 0) {
+          const ffHoster = hosters.find(h => h.toLowerCase().includes('fuckingfast'));
+          const defaultHoster = ffHoster || hosters[0];
+          setSelectedHoster(defaultHoster);
         }
       }
     }, updateInterval);
@@ -68,27 +71,118 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
 
     for (let i = 0; i < totalParts; i++) {
       setCurrentPart(i + 1);
-      // Simulate progress for each part
-      for (let p = 0; p <= 100; p += 10) {
+      // Fast progress animation for each part
+      for (let p = 0; p <= 100; p += 25) {
         setDownloadProgress(Math.round(((i * 100) + p) / totalParts));
-        await new Promise(r => setTimeout(r, 150));
+        await new Promise(r => setTimeout(r, 50));
       }
       // Open the actual link
       window.open(links[i].url, '_blank');
       // Small delay between opening tabs to avoid browser blocking
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 300));
     }
     
     setDownloadProgress(100);
     setTimeout(() => {
       setPhase("completed");
-    }, 1000);
+    }, 500);
+  };
+
+  const handleNativeDownload = async () => {
+    if (!selectedHoster || !groupedLinks[selectedHoster] || isPicking) return;
+    
+    setIsPicking(true);
+    setFsError(null);
+
+    try {
+      // 1. Ask for directory permission
+      const directoryHandle = await window.showDirectoryPicker({
+        mode: 'readwrite'
+      });
+
+      setPhase("downloading");
+      const links = groupedLinks[selectedHoster];
+      const totalParts = links.length;
+
+      for (let i = 0; i < totalParts; i++) {
+        setCurrentPart(i + 1);
+        const link = links[i];
+        let downloadUrl = link.url;
+
+        // 2. Smart Scraper: Resolve direct link if it's a landing page (e.g. fuckingfast)
+        if (downloadUrl.includes('fuckingfast.co') && !downloadUrl.includes('/dl/')) {
+          try {
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(downloadUrl)}`;
+            const res = await fetch(proxyUrl);
+            const data = await res.json();
+            const dlMatch = data.contents.match(/https:\/\/fuckingfast\.co\/dl\/[a-zA-Z0-9_-]+/);
+            if (dlMatch) downloadUrl = dlMatch[0];
+          } catch (e) {
+            console.warn("Scraper failed for part", i + 1, "falling back to landing URL");
+          }
+        }
+
+        const fileName = downloadUrl.split('/').pop().split('#')[0] || `part_${i+1}.rar`;
+
+        try {
+          // 3. Fetch the file
+          const response = await fetch(downloadUrl);
+          
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          
+          // 4. Create file in the selected directory
+          const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+          const writable = await fileHandle.createWritable();
+
+          // 5. Stream the download directly to the file
+          const reader = response.body.getReader();
+          const contentLength = +response.headers.get('Content-Length');
+          let receivedLength = 0;
+
+          while(true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            
+            await writable.write(value);
+            receivedLength += value.length;
+            
+            // Update progress
+            if (contentLength) {
+              const partProgress = (receivedLength / contentLength) * 100;
+              const overallProgress = Math.round(((i * 100) + partProgress) / totalParts);
+              setDownloadProgress(overallProgress);
+            }
+          }
+
+          await writable.close();
+        } catch (err) {
+          console.error(`Failed to download ${fileName}:`, err);
+          if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+            setFsError("Download Blocked: The server is protecting the file. Please try a different hoster or check your internet.");
+            setPhase("finished");
+            return;
+          }
+          throw err;
+        }
+      }
+
+      setDownloadProgress(100);
+      setTimeout(() => {
+        setPhase("completed");
+      }, 500);
+
+    } catch (err) {
+      console.error("Native File System Error:", err);
+      if (err.name === 'AbortError') return;
+      setFsError(err.message);
+      setPhase("finished");
+    } finally {
+      setIsPicking(false);
+    }
   };
 
   const totalSize = useMemo(() => {
     if (!selectedHoster || !groupedLinks[selectedHoster]) return null;
-    // Try to sum up sizes if they exist and are in consistent format (e.g. "1.2 GB")
-    // For now just check if they exist
     return groupedLinks[selectedHoster][0]?.size ? "Multiple Parts" : null;
   }, [selectedHoster, groupedLinks]);
 
@@ -168,19 +262,28 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
                 <span className="summary-label">Total Parts</span>
                 <span className="summary-value">{groupedLinks[selectedHoster]?.length || 0} Parts</span>
               </div>
-              {groupedLinks[selectedHoster]?.[0]?.size && (
-                <div className="summary-item">
-                  <span className="summary-label">Est. Size</span>
-                  <span className="summary-value">{groupedLinks[selectedHoster][0].size} per part</span>
-                </div>
-              )}
             </div>
 
-            <button className="main-download-btn" onClick={handleStartDownload}>
-              <Download size={20} /> Start Download Now
-            </button>
-            
-            <p className="download-hint">Parts will be queued sequentially in your browser</p>
+            {fsError && (
+              <div className="fs-error-box">
+                <AlertTriangle size={18} />
+                <p>{fsError}</p>
+              </div>
+            )}
+
+            <div className="download-action-container">
+              <button 
+                className={`main-download-btn ${isPicking ? 'loading' : ''}`} 
+                onClick={handleNativeDownload}
+                disabled={isPicking}
+              >
+                {isPicking ? <><div className="spinner"></div> Processing...</> : <><FolderDown size={20} /> Download to Folder</>}
+              </button>
+            </div>
+
+            <p className="download-hint">
+              {fsError ? fsError : "Select a folder once and we'll handle the rest."}
+            </p>
           </div>
         )}
 
@@ -190,11 +293,11 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
               <div className="download-icon-anim active">
                 <Download size={32} />
               </div>
-              <h3>Downloading Parts</h3>
+              <h3>Queuing Downloads</h3>
             </div>
             
             <div className="download-status-info">
-              <span className="part-counter">Part {currentPart} of {groupedLinks[selectedHoster]?.length}</span>
+              <span className="part-counter">Sending Part {currentPart} of {groupedLinks[selectedHoster]?.length}</span>
               <span className="progress-percent">{downloadProgress}%</span>
             </div>
 
@@ -209,7 +312,7 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
               </div>
             </div>
             
-            <p className="server-status">Please do not close this popup until all parts are queued.</p>
+            <p className="server-status">Please do not close this popup until all parts are queued in your browser.</p>
           </div>
         )}
 
@@ -217,11 +320,11 @@ const DownloadPopup = React.memo(({ onClose, groupedLinks }) => {
           <div className="completed-phase-content">
             <div className="popup-header">
               <div className="success-icon large">✓</div>
-              <h3>All Parts Queued</h3>
+              <h3>Tasks Completed</h3>
             </div>
-            <p className="server-status">All download parts have been sent to your browser. You can now close this window.</p>
+            <p className="server-status">All parts have been processed. Check your downloads folder or browser tabs.</p>
             <button className="main-download-btn secondary" onClick={onClose}>
-              Close Popup
+              Done
             </button>
           </div>
         )}
