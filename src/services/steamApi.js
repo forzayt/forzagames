@@ -2,6 +2,9 @@ import { mapFitgirlToUI } from './dataMapper';
 
 const FITGIRL_API_URL = 'https://fitgirlapi-qhc5.onrender.com/api/v1';
 
+// Global cache for all fetched games to enable local search
+const gamesCache = new Map();
+
 // Import all JSON files from the data/id directory
 const categoryFiles = import.meta.glob('../data/id/*.json', { eager: true });
 
@@ -20,15 +23,44 @@ export const steamApi = {
 
   // Get details from Fitgirl API (used for both cards and details page)
   getGameDetails: async (id) => {
+    // Check cache first
+    if (gamesCache.has(id.toString())) {
+      return gamesCache.get(id.toString());
+    }
+
     try {
       const response = await fetch(`${FITGIRL_API_URL}/${id}`);
       if (!response.ok) throw new Error('Game not found');
       const data = await response.json();
-      return mapFitgirlToUI(data);
+      const mapped = mapFitgirlToUI(data);
+      
+      // Save to cache for local searching
+      if (mapped) {
+        gamesCache.set(id.toString(), mapped);
+      }
+      
+      return mapped;
     } catch (error) {
       console.error(`Error fetching Fitgirl details for ${id}:`, error);
       return null;
     }
+  },
+
+  // Search games locally from already loaded titles
+  searchGames: async (query) => {
+    if (!query || query.trim() === '') return [];
+    
+    const normalizedQuery = query.toLowerCase().trim();
+    const results = [];
+    
+    // Search within the cache of already loaded games
+    for (const game of gamesCache.values()) {
+      if (game.name.toLowerCase().includes(normalizedQuery)) {
+        results.push(game);
+      }
+    }
+    
+    return results;
   },
 
   // Compatibility wrappers
