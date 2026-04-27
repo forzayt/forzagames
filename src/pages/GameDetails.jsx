@@ -133,8 +133,8 @@ const GameDetails = () => {
             )}
           </div>
           
+          {/* Download links section hidden per user request
           <div className="content-right">
-            {/* Download Links Section */}
             {game.download_links && game.download_links.length > 0 && (
               <section className="detail-section download-section">
                 <h2>Download Repacks</h2>
@@ -160,6 +160,7 @@ const GameDetails = () => {
               </section>
             )}
           </div>
+          */}
         </div>
 
         {/* Additional Info Sidebar - Now Full Width */}

@@ -1,6 +1,6 @@
 import { mapFitgirlToUI } from './dataMapper';
 
-const FITGIRL_API_URL = 'https://fitgirlapi-qhc5.onrender.com/api/v1';
+const FITGIRL_API_URL = import.meta.env.VITE_FITGIRL_API_URL;
 
 // Global cache for all fetched games to enable local search
 const gamesCache = new Map();
