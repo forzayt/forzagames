@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Download, Monitor, X, ArrowUp, Star, Calendar } from "lucide-react";
+import { ChevronLeft, Download, Monitor, X, ArrowUp, Star, Calendar, PlayCircle, Globe, Info } from "lucide-react";
 import "./GameDetails.css";
 
 import steamApi from "../services/steamApi";
@@ -11,16 +11,12 @@ const GameDetails = () => {
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedScreenshot, setSelectedScreenshot] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 400) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
+      setShowScrollTop(window.scrollY > 400);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -32,9 +28,7 @@ const GameDetails = () => {
       try {
         setLoading(true);
         const data = await steamApi.getGameDetails(id);
-        if (!data) {
-          throw new Error("Failed to fetch game details");
-        }
+        if (!data) throw new Error("Failed to fetch game details");
         setGame(data);
         setLoading(false);
       } catch (err) {
@@ -75,24 +69,34 @@ const GameDetails = () => {
       >
         <div className="hero-overlay">
           <button className="back-btn" onClick={() => navigate(-1)}>
-            <ChevronLeft size={24} /> Back
+            <ChevronLeft size={20} /> Back
           </button>
+          
           <div className="hero-content">
-            <img src={game.background_image} alt={game.name} className="game-cover" />
+            <div className="hero-poster-wrapper">
+              <img src={game.image || game.mainImage} alt={game.name} className="game-cover" />
+            </div>
+            
             <div className="hero-info">
               <div className="badges">
-                {game.metacritic && <span className="metascore">Metascore: {game.metacritic}</span>}
-                <span className="rating"><Star size={16} fill="currentColor" /> {game.rating}</span>
+                {game.metacritic && <span className="metascore" title="Metacritic Score">Score: {game.metacritic}</span>}
+                {game.rating && game.rating !== 'N/A' && <span className="rating"><Star size={16} fill="currentColor" /> {game.rating}</span>}
               </div>
+              
               <h1>{game.name}</h1>
+              
               <div className="genres">
                 {game.genres?.map(g => <span key={g.id} className="genre-tag">{g.name}</span>)}
               </div>
-              <p className="short-desc">{game.description_raw?.slice(0, 300)}...</p>
+              
+              <p className="short-desc" dangerouslySetInnerHTML={{ __html: game.description_raw }}></p>
               
               <div className="meta-compact">
                 <span><Calendar size={18} /> {game.released}</span>
                 <span><Monitor size={18} /> {game.platforms?.map(p => p.platform.name).slice(0, 3).join(', ')}</span>
+                {game.developers && game.developers.length > 0 && (
+                  <span><Info size={18} /> {game.developers[0].name}</span>
+                )}
               </div>
             </div>
           </div>
@@ -100,91 +104,137 @@ const GameDetails = () => {
       </div>
 
       <div className="game-details-content">
-        {/* About Section */}
-        <section className="detail-section">
-          <h2>About The Game</h2>
-          <div className="about-text" dangerouslySetInnerHTML={{ __html: game.description }}></div>
-        </section>
+        
+        <div className="content-main-grid">
+          <div className="content-left">
+            {/* About Section */}
+            <section className="detail-section">
+              <h2>About The Game</h2>
+              <div className="about-text" dangerouslySetInnerHTML={{ __html: game.about_the_game || game.description }}></div>
+            </section>
 
-        {/* Screenshots Section */}
-        {game.screenshots && game.screenshots.length > 0 && (
-          <section className="detail-section">
-            <h2>Screenshots</h2>
-            <div className="screenshots-grid">
-              {game.screenshots.slice(0, 8).map(ss => (
-                <img 
-                  key={ss.id} 
-                  src={ss.image} 
-                  alt="Screenshot" 
-                  className="screenshot" 
-                  onClick={() => setSelectedScreenshot(ss.image)}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* System Requirements (if available) */}
-        {game.platforms?.find(p => p.platform.name === "PC")?.requirements && (
-          <section className="detail-section sys-req">
-            <h2>System Requirements (PC)</h2>
-            <div className="req-grid">
-              <div className="req-block">
-                <div dangerouslySetInnerHTML={{ __html: game.platforms.find(p => p.platform.name === "PC").requirements.minimum }}></div>
-              </div>
-              {game.platforms.find(p => p.platform.name === "PC").requirements.recommended && (
-                <div className="req-block">
-                  <div dangerouslySetInnerHTML={{ __html: game.platforms.find(p => p.platform.name === "PC").requirements.recommended }}></div>
+            {/* System Requirements */}
+            {game.pc_requirements && (
+              <section className="detail-section sys-req">
+                <h2>System Requirements (PC)</h2>
+                <div className="req-grid">
+                  {game.pc_requirements.minimum && (
+                    <div className="req-block min-req">
+                      <div dangerouslySetInnerHTML={{ __html: game.pc_requirements.minimum }}></div>
+                    </div>
+                  )}
+                  {game.pc_requirements.recommended && (
+                    <div className="req-block rec-req">
+                      <div dangerouslySetInnerHTML={{ __html: game.pc_requirements.recommended }}></div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* Additional Info */}
-        <section className="detail-section meta-info">
-          <h2>Game Details</h2>
-          <div className="meta-grid">
-            {game.developers && game.developers.length > 0 && (
-              <div className="meta-item"><strong>Developer:</strong> {game.developers.map(d => d.name).join(", ")}</div>
+              </section>
             )}
-            {game.publishers && game.publishers.length > 0 && (
-              <div className="meta-item"><strong>Publisher:</strong> {game.publishers.map(p => p.name).join(", ")}</div>
-            )}
-            {game.tags && game.tags.length > 0 && (
-              <div className="features-container">
-                <strong>Tags:</strong>
-                <div className="features-list">
-                  {game.tags.slice(0, 15).map(t => (
-                    <span key={t.id} className="feature-badge">{t.name}</span>
+          </div>
+          
+          <div className="content-right">
+            {/* Download Links Section */}
+            {game.download_links && game.download_links.length > 0 && (
+              <section className="detail-section download-section">
+                <h2>Download Repacks</h2>
+                <div className="download-list">
+                  {game.download_links.map((link, index) => (
+                    <a 
+                      key={index} 
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="download-card"
+                    >
+                      <div className="download-icon">
+                        <Download size={20} />
+                      </div>
+                      <div className="download-info">
+                        <span className="hoster-name">{link.hoster || 'Mirror ' + (index + 1)}</span>
+                        {link.size && <span className="download-size">{link.size}</span>}
+                      </div>
+                    </a>
                   ))}
                 </div>
+              </section>
+            )}
+          </div>
+        </div>
+
+        {/* Additional Info Sidebar - Now Full Width */}
+        <section className="detail-section meta-info-sidebar full-width-meta">
+          <h2>Game Details</h2>
+          <div className="meta-list">
+            {game.developers && game.developers.length > 0 && (
+              <div className="meta-row">
+                <span className="meta-label">Developer</span>
+                <span className="meta-val">{game.developers.map(d => d.name).join(", ")}</span>
+              </div>
+            )}
+            {game.publishers && game.publishers.length > 0 && (
+              <div className="meta-row">
+                <span className="meta-label">Publisher</span>
+                <span className="meta-val">{game.publishers.map(p => p.name).join(", ")}</span>
+              </div>
+            )}
+            {game.released && (
+              <div className="meta-row">
+                <span className="meta-label">Release Date</span>
+                <span className="meta-val">{game.released}</span>
               </div>
             )}
           </div>
+
+          {game.tags && game.tags.length > 0 && (
+            <div className="features-container">
+              <span className="meta-label">Features & Tags</span>
+              <div className="features-list">
+                {game.tags.slice(0, 12).map(t => (
+                  <span key={t.id} className="feature-badge">{t.name}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {game.supported_languages && (
+            <div className="languages-container">
+              <span className="meta-label"><Globe size={16} /> Supported Languages</span>
+              <div className="lang-text" dangerouslySetInnerHTML={{ __html: game.supported_languages }}></div>
+            </div>
+          )}
         </section>
 
-        {/* Download Links Section */}
-        {game.download_links && game.download_links.length > 0 && (
-          <section className="detail-section download-section">
-            <h2>Download Repacks</h2>
-            <div className="download-grid">
-              {game.download_links.map((link, index) => (
-                <a 
-                  key={index} 
-                  href={link.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="download-card"
+        {/* Media Section: Trailers & Screenshots */}
+        {(game.movies?.length > 0 || game.screenshots?.length > 0) && (
+          <section className="detail-section media-section">
+            <h2>Media & Screenshots</h2>
+            <div className="media-scroller">
+              {/* Trailers */}
+              {game.movies?.map(movie => (
+                <div 
+                  key={movie.id} 
+                  className="media-item video-item"
+                  onClick={() => window.open(movie.hls, '_blank')}
+                  title="Open Video Stream"
                 >
-                  <div className="download-icon">
-                    <Download size={24} />
+                  <img src={movie.thumbnail} alt={movie.name} />
+                  <div className="play-overlay">
+                    <PlayCircle size={48} />
+                    <span>Trailer</span>
                   </div>
-                  <div className="download-info">
-                    <span className="hoster-name">{link.hoster || 'Mirror ' + (index + 1)}</span>
-                    <span className="download-size">{link.size || 'N/A'}</span>
-                  </div>
-                </a>
+                </div>
+              ))}
+              
+              {/* Screenshots */}
+              {game.screenshots?.slice(0, 15).map(ss => (
+                <div 
+                  key={ss.id} 
+                  className="media-item"
+                  onClick={() => setSelectedMedia(ss.image)}
+                >
+                  <img src={ss.image} alt="Gameplay Screenshot" />
+                </div>
               ))}
             </div>
           </section>
@@ -192,13 +242,13 @@ const GameDetails = () => {
       </div>
 
       {/* Screenshot Modal */}
-      {selectedScreenshot && (
-        <div className="screenshot-modal" onClick={() => setSelectedScreenshot(null)}>
-          <div className="modal-content">
-            <button className="close-modal" onClick={() => setSelectedScreenshot(null)}>
+      {selectedMedia && (
+        <div className="media-modal" onClick={() => setSelectedMedia(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-modal" onClick={() => setSelectedMedia(null)}>
               <X size={32} />
             </button>
-            <img src={selectedScreenshot} alt="Full size screenshot" className="modal-image" />
+            <img src={selectedMedia} alt="Full size media" className="modal-image" />
           </div>
         </div>
       )}
