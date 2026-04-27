@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, Download, Monitor, X, ArrowUp, Star, Calendar } from "lucide-react";
 import "./GameDetails.css";
 
-const API_KEY = import.meta.env.VITE_RAWG_API_KEY;
+import steamApi from "../services/steamApi";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -31,17 +31,10 @@ const GameDetails = () => {
     const fetchGameDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`https://api.rawg.io/api/games/${id}?key=${API_KEY}`);
-        if (!response.ok) {
+        const data = await steamApi.getGameDetails(id);
+        if (!data) {
           throw new Error("Failed to fetch game details");
         }
-        const data = await response.json();
-        
-        // Fetch screenshots separately as RAWG detail doesn't include all
-        const screenshotResponse = await fetch(`https://api.rawg.io/api/games/${id}/screenshots?key=${API_KEY}`);
-        const screenshotData = await screenshotResponse.json();
-        data.screenshots = screenshotData.results || [];
-
         setGame(data);
         setLoading(false);
       } catch (err) {
@@ -152,13 +145,13 @@ const GameDetails = () => {
         <section className="detail-section meta-info">
           <h2>Game Details</h2>
           <div className="meta-grid">
-            {game.developers && (
+            {game.developers && game.developers.length > 0 && (
               <div className="meta-item"><strong>Developer:</strong> {game.developers.map(d => d.name).join(", ")}</div>
             )}
-            {game.publishers && (
+            {game.publishers && game.publishers.length > 0 && (
               <div className="meta-item"><strong>Publisher:</strong> {game.publishers.map(p => p.name).join(", ")}</div>
             )}
-            {game.tags && (
+            {game.tags && game.tags.length > 0 && (
               <div className="features-container">
                 <strong>Tags:</strong>
                 <div className="features-list">
@@ -170,6 +163,32 @@ const GameDetails = () => {
             )}
           </div>
         </section>
+
+        {/* Download Links Section */}
+        {game.download_links && game.download_links.length > 0 && (
+          <section className="detail-section download-section">
+            <h2>Download Repacks</h2>
+            <div className="download-grid">
+              {game.download_links.map((link, index) => (
+                <a 
+                  key={index} 
+                  href={link.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="download-card"
+                >
+                  <div className="download-icon">
+                    <Download size={24} />
+                  </div>
+                  <div className="download-info">
+                    <span className="hoster-name">{link.hoster || 'Mirror ' + (index + 1)}</span>
+                    <span className="download-size">{link.size || 'N/A'}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Screenshot Modal */}

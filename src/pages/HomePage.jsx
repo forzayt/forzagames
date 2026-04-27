@@ -1,19 +1,27 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar/Navbar";
 import SecondaryNavbar from "../components/SecondaryNavbar/SecondaryNavbar";
-import HeroSlider from "../components/HeroSlider/HeroSlider";
 import GameCardsSlider from "../components/GameCardsSlider/GameCardsSlider";
-
+import steamApi from "../services/steamApi";
 const HomePage = () => {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    setCategories(steamApi.getCategories());
+  }, []);
+
   return (
     <div>
       <Navbar />
       <SecondaryNavbar />
-      <HeroSlider />
-      <GameCardsSlider title="Special Offers" category="specials" />
-      <GameCardsSlider title="Top Sellers" category="top_sellers" />
-      <GameCardsSlider title="New Releases" category="new_releases" />
-      <GameCardsSlider title="Coming Soon" category="coming_soon" />
+      {categories.map((cat) => (
+        <GameCardsSlider 
+          key={cat.id} 
+          title={cat.title} 
+          category={cat.id} 
+          gameIds={cat.ids}
+        />
+      ))}
       <div className="copyright-container">
         <p>© 2026, Forza Games, Inc. All rights reserved.</p>
         <p>

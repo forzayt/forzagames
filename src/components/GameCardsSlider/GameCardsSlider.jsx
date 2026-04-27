@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
 import steamApi from "../../services/steamApi";
-import { mapSteamGameToUI } from "../../services/dataMapper";
 import { useNavigate } from "react-router-dom";
 import "./GameCardsSlider.css";
 
@@ -18,7 +17,7 @@ const GameCard = ({ game, onClick }) => (
 
 const CARD_WIDTH = 180;
 
-const GameSlider = ({ title = "Special Offers", category = "specials" }) => {
+const GameSlider = ({ title = "Special Offers", category = "specials", gameIds = [] }) => {
   const [games, setGames] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(6);
@@ -28,44 +27,28 @@ const GameSlider = ({ title = "Special Offers", category = "specials" }) => {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const data = await steamApi.getFeaturedCategories();
-        let items = [];
-        
-        if (category === "specials") {
-          items = data.specials?.items || [];
-        } else if (category === "top_sellers") {
-          items = data.top_sellers?.items || [];
-        } else if (category === "new_releases") {
-          items = data.new_releases?.items || [];
-        } else if (category === "coming_soon") {
-          items = data.coming_soon?.items || [];
+        setLoading(true);
+        if (gameIds && gameIds.length > 0) {
+          const results = await Promise.all(
+            gameIds.map(id => steamApi.getGameDetails(id))
+          );
+          
+          const validGames = results.filter(Boolean);
+          setGames(validGames);
         } else {
-          // Fallback to specials if category not found
-           items = data.specials?.items || [];
-          }
-  
-          const mappedGames = items.slice(0, 30).map(mapSteamGameToUI);
-          
-          // Remove duplicates based on ID to avoid React key warnings
-          const uniqueGames = [];
-          const seenIds = new Set();
-          
-          mappedGames.forEach(game => {
-            if (!seenIds.has(game.id)) {
-              seenIds.add(game.id);
-              uniqueGames.push(game);
-            }
-          });
-
-          setGames(uniqueGames);
-          setLoading(false);
+          // Fallback to legacy behavior if no gameIds provided
+          const data = await steamApi.getFeaturedCategories();
+          const items = data[category]?.items || [];
+          setGames(items);
+        }
+        setLoading(false);
       } catch (error) {
-        console.error(`Error fetching ${category}:`, error);
+        console.error(`Error fetching games for ${title}:`, error);
         setLoading(false);
       }
     };
     fetchGames();
-  }, [category]);
+  }, [category, gameIds, title]);
 
   useEffect(() => {
     function updateItemsPerView() {
