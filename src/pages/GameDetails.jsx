@@ -5,6 +5,133 @@ import "./GameDetails.css";
 
 import steamApi from "../services/steamApi";
 
+const DownloadPopup = React.memo(({ onClose }) => {
+  const [phase, setPhase] = useState("connecting");
+  const [progress, setProgress] = useState(0);
+  const [speeds, setSpeeds] = useState({ download: 0, upload: 0 });
+
+  useEffect(() => {
+    // Phase 1: Connecting (5 seconds)
+    // We use a single state update for progress to trigger CSS transition
+    const connTimer = setTimeout(() => {
+      setProgress(100);
+    }, 100);
+
+    const phaseTimer = setTimeout(() => {
+      setPhase("speedtest");
+    }, 5100);
+
+    return () => {
+      clearTimeout(connTimer);
+      clearTimeout(phaseTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "speedtest") return;
+
+    const testDuration = 10000;
+    const updateInterval = 200; // Reduced frequency to 5 times per second
+    let elapsed = 0;
+
+    const testTimer = setInterval(() => {
+      elapsed += updateInterval;
+      setSpeeds({
+        download: (Math.random() * 50 + 20).toFixed(1),
+        upload: (Math.random() * 20 + 5).toFixed(1)
+      });
+
+      if (elapsed >= testDuration) {
+        clearInterval(testTimer);
+        setPhase("finished");
+        setTimeout(onClose, 2500);
+      }
+    }, updateInterval);
+
+    return () => clearInterval(testTimer);
+  }, [phase, onClose]);
+
+  return (
+    <div className="download-popup-overlay">
+      <div className="download-popup-content">
+        {phase === "connecting" && (
+          <>
+            <div className="popup-header">
+              <Download className="download-icon-anim" size={32} />
+              <h3>Connecting to Servers</h3>
+            </div>
+            <p className="server-status">Establishing secure connection to FitGirl Repack servers...</p>
+            
+            <div className="progress-container">
+              <div className="progress-bar-wrapper">
+                <div 
+                  className="progress-bar-fill animated" 
+                  style={{ width: `${progress}%` }}
+                >
+                  <div className="progress-shimmer"></div>
+                </div>
+              </div>
+              <div className="progress-stats">
+                <span>{progress === 100 ? "100%" : "Connecting..."}</span>
+                <span>{progress < 100 ? "Fetching manifest..." : "Connected!"}</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {phase === "speedtest" && (
+          <>
+            <div className="popup-header">
+              <Globe className="download-icon-anim" size={32} />
+              <h3>Optimizing Download</h3>
+            </div>
+            <p className="server-status">Testing your connection for maximum throughput...</p>
+            
+            <div className="speed-test-container">
+              <div className="speed-card">
+                <span className="speed-label">DOWNLOAD</span>
+                <span className="speed-value">{speeds.download}</span>
+                <span className="speed-unit">Mbps</span>
+                <div className="speed-bar download-bar">
+                  <div className="speed-bar-fill" style={{ width: `${(speeds.download / 70) * 100}%` }}></div>
+                </div>
+              </div>
+              
+              <div className="speed-card">
+                <span className="speed-label">UPLOAD</span>
+                <span className="speed-value">{speeds.upload}</span>
+                <span className="speed-unit">Mbps</span>
+                <div className="speed-bar upload-bar">
+                  <div className="speed-bar-fill" style={{ width: `${(speeds.upload / 25) * 100}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {phase === "finished" && (
+          <>
+            <div className="popup-header">
+              <div className="success-icon">✓</div>
+              <h3>Ready to Download</h3>
+            </div>
+            <p className="server-status">Connection optimized. Your download is ready to begin at max speed!</p>
+            <div className="final-check">
+              <span>Server: FitGirl Repack Global #1</span>
+              <span>Encryption: AES-256</span>
+              <span>Latency: 14ms</span>
+            </div>
+          </>
+        )}
+
+        <div className="popup-footer">
+          <span className="security-tag">Encrypted SSL Connection</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const GameDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -13,6 +140,11 @@ const GameDetails = () => {
   const [error, setError] = useState(null);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showDownloadPopup, setShowDownloadPopup] = useState(false);
+
+  const handleDownloadClick = () => {
+    setShowDownloadPopup(true);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -105,7 +237,7 @@ const GameDetails = () => {
                 )}
               </div>
 
-              <button className="hero-download-btn">
+              <button className="hero-download-btn" onClick={handleDownloadClick}>
                 <Download size={24} /> Download
               </button>
             </div>
@@ -261,6 +393,11 @@ const GameDetails = () => {
             <img src={selectedMedia} alt="Full size media" className="modal-image" />
           </div>
         </div>
+      )}
+
+      {/* Download Gimmick Popup */}
+      {showDownloadPopup && (
+        <DownloadPopup onClose={() => setShowDownloadPopup(false)} />
       )}
 
       {/* Scroll to Top Button */}
