@@ -31,8 +31,8 @@ export const mapSteamSearchToUI = (item) => {
     name: item.name,
     category: 'Game',
     discount: item.discount_percent > 0 ? `-${item.discount_percent}%` : null,
-    originalPrice: item.original_price, // Search API might return formatted strings
+    originalPrice: item.original_price,
     discountedPrice: item.final_price,
-    image: item.logo || item.image,
+    image: item.tiny_image || item.logo || item.image || `https://cdn.cloudflare.steamstatic.com/steam/apps/${item.id || item.appid}/header.jpg`,
   };
 };

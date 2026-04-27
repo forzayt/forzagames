@@ -19,11 +19,12 @@ export const steamApi = {
   // SEARCH / FILTER ENGINE
   searchGames: async (query, params = {}) => {
     const urlParams = new URLSearchParams({
-      json: 1,
       term: query,
+      l: 'english',
+      cc: 'US',
       ...params
     });
-    const response = await fetch(`${BASE_URL}/search/results/?${urlParams.toString()}`);
+    const response = await fetch(`${BASE_URL}/api/storesearch/?${urlParams.toString()}`);
     return response.json();
   },
   getSuggestions: async (query) => {

@@ -20,7 +20,7 @@ const SubNavbar = () => {
         setLoading(true);
         try {
           const data = await steamApi.searchGames(query);
-          const results = (data.items || []).slice(0, 8).map(mapSteamSearchToUI);
+          const results = (data.items || []).slice(0, 5).map(mapSteamSearchToUI);
           
           // Remove duplicates based on ID to avoid React key warnings
           const uniqueResults = [];
@@ -126,7 +126,6 @@ const SubNavbar = () => {
                       key={game.id} 
                       className="search_item"
                       onClick={() => {
-                        console.log("Navigating to game:", game.id);
                         if (game.id) {
                           navigate(`/game/${game.id}`);
                           setQuery("");
